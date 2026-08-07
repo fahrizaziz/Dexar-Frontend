@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useApp } from '../../context/AppContext';
 import {
   Clock,
   Shield,
@@ -9,7 +8,6 @@ import {
   UserCheck,
   ChevronDown,
   Building2,
-  Sparkles,
   LogOut,
   Sliders,
   CalendarDays,
@@ -42,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenLoginModal,
 }) => {
-  const { currentUser, switchRole, hasPermission } = useAuth();
+  const { currentUser, logout, hasPermission } = useAuth();
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -64,6 +62,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const canManageGeofence = hasPermission('MANAGE_GEOFENCE_OFFICE');
   const canViewAuditLogs = hasPermission('VIEW_AUDIT_TRAILS');
   const canManageMenuAccess = hasPermission('MANAGE_MENU_ACCESS');
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileMenuOpen(false);
+    onOpenLoginModal();
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-[#0c0c0e]/95 backdrop-blur-md border-b border-zinc-800/90 shadow-2xl">
@@ -281,26 +285,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
 
-                  {/* Switch Role Quick Actions */}
+                  {/* Actions */}
                   <div className="space-y-1 my-1">
-                    {isHRD && (
-                      <button
-                        onClick={() => {
-                          switchRole('KARYAWAN');
-                          setIsProfileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-zinc-800 text-zinc-200 transition-colors text-xs font-medium cursor-pointer"
-                      >
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span>Switch Mode: Karyawan WFH</span>
-                      </button>
-                    )}
-
                     <button
-                      onClick={() => {
-                        onOpenLoginModal();
-                        setIsProfileMenuOpen(false);
-                      }}
+                      onClick={handleLogout}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-rose-950/40 text-rose-300 transition-colors text-xs font-medium cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 text-rose-400" />
