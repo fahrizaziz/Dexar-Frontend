@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="boxMfe" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="boxHrd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="boxAuth" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6d28d9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="500" fill="url(#bg2)" rx="12" />
+
+  <text x="500" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff">MICRO-FRONTEND &amp; INTEGRATED SYSTEM ARCHITECTURE</text>
+  <text x="500" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8">Alur Integrasi MFE Shell Container, Role-Based Access Control (RBAC), Liveness Guard, dan Backend REST API</text>
+
+  <!-- Top Layer: Container Shell -->
+  <rect x="50" y="90" width="900" height="70" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2" />
+  <text x="80" y="125" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#38bdf8">MFE Host Container Shell</text>
+  <text x="80" y="145" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8">Global AuthContext, Navigation Tabs, Dynamic RBAC Router, Notification Engine</text>
+
+  <!-- Middle Layer: Micro-Frontend Modules -->
+  <!-- MFE 1: Employee Portal -->
+  <rect x="50" y="190" width="270" height="150" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2" />
+  <rect x="50" y="190" width="270" height="36" rx="10" fill="url(#boxMfe)" />
+  <text x="65" y="214" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">MFE Portal Karyawan</text>
+  <text x="65" y="245" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Clock In / Out WFH</text>
+  <text x="65" y="265" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Liveness Camera Check</text>
+  <text x="65" y="285" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• GPS Geofence Validator</text>
+  <text x="65" y="305" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Daily Work Log Checklist</text>
+  <text x="65" y="325" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Form Cuti / Sakit / Overtime</text>
+
+  <!-- MFE 2: HRD Governance -->
+  <rect x="365" y="190" width="270" height="150" rx="10" fill="#1e293b" stroke="#0284c7" stroke-width="2" />
+  <rect x="365" y="190" width="270" height="36" rx="10" fill="url(#boxHrd)" />
+  <text x="380" y="214" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">MFE HRD &amp; Management</text>
+  <text x="380" y="245" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Real-Time Monitoring</text>
+  <text x="380" y="265" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Approval Cuti &amp; WFH</text>
+  <text x="380" y="285" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Master Shift &amp; Geofence</text>
+  <text x="380" y="305" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Master Data &amp; Bulk Import</text>
+  <text x="380" y="325" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Rekap Payroll &amp; Export</text>
+
+  <!-- MFE 3: Security & Access Guard -->
+  <rect x="680" y="190" width="270" height="150" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="2" />
+  <rect x="680" y="190" width="270" height="36" rx="10" fill="url(#boxAuth)" />
+  <text x="695" y="214" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Security &amp; Audit Guard</text>
+  <text x="695" y="245" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• ProtectedView RBAC Guard</text>
+  <text x="695" y="265" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Switch Role Demo Engine</text>
+  <text x="695" y="285" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Audit Trail System Logs</text>
+  <text x="695" y="305" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Menu Access Manager</text>
+  <text x="695" y="325" font-family="Arial, sans-serif" font-size="12" fill="#cbd5e1">• Company HR Blast News</text>
+
+  <!-- Bottom Layer: Backend REST API -->
+  <rect x="50" y="380" width="900" height="80" rx="10" fill="#0f172a" stroke="#0284c7" stroke-width="2" />
+  <text x="80" y="415" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#38bdf8">RESTful API Backend Layer (Node.js / Express / Go / Laravel)</text>
+  <text x="80" y="440" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8">28 API Endpoints • JWT Bearer Auth • Multi-Format Export (XLSX, PDF, DOCX) • PostgreSQL / MySQL Storage</text>
+</svg>

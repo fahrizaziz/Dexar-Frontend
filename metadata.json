@@ -1,0 +1,6 @@
+{
+  "name": "Aplikasi Absensi WFH & Monitoring Karyawan",
+  "description": "Sistem Absensi Work From Home Karyawan dan Dashboard Monitoring HRD dengan capture foto webcam, geo-lokasi, dan manajemen data master karyawan.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
