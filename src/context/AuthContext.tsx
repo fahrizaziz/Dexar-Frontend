@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserSession, Role, Employee } from '../types';
 import { storageService } from '../services/storageService';
+import { authService } from '../services/authService';
 
 export type Permission = 
   | 'CLOCK_IN_WFH'
@@ -32,6 +33,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 
 interface AuthContextType {
   currentUser: UserSession;
+  loginWithApi: (email: string, pass: string) => Promise<UserSession>;
+  logout: () => void;
   switchRole: (role: Role) => void;
   loginAsEmployee: (employeeId: string) => void;
   availableEmployees: Employee[];
@@ -39,6 +42,7 @@ interface AuthContextType {
   rolePermissions: Record<Role, Permission[]>;
   updateRolePermission: (role: Role, permission: Permission, enabled: boolean) => void;
   resetRolePermissions: () => void;
+  isLoadingAuth: boolean;
 }
 
 const DEFAULT_EMPLOYEE_USER: UserSession = {
@@ -78,6 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return DEFAULT_EMPLOYEE_USER;
   });
 
+  const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
+
   const [rolePermissions, setRolePermissions] = useState<Record<Role, Permission[]>>(() => {
     const saved = localStorage.getItem('wfh_role_permissions_v1');
     if (saved) {
@@ -92,6 +98,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([]);
 
+  // Check auth session from backend API on mount
+  useEffect(() => {
+    async function initAuth() {
+      if (authService.isAuthenticated()) {
+        try {
+          const userProfile = await authService.getMe();
+          setCurrentUser(userProfile);
+        } catch (err) {
+          console.warn('Session verification failed, fallback to local state:', err);
+        }
+      }
+      setIsLoadingAuth(false);
+    }
+    initAuth();
+  }, []);
+
   useEffect(() => {
     const emps = storageService.getEmployees();
     setAvailableEmployees(emps);
@@ -104,6 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     localStorage.setItem('wfh_role_permissions_v1', JSON.stringify(rolePermissions));
   }, [rolePermissions]);
+
+  const loginWithApi = async (email: string, pass: string): Promise<UserSession> => {
+    const data = await authService.login(email, pass);
+    setCurrentUser(data.user);
+    return data.user;
+  };
+
+  const logout = () => {
+    authService.logout();
+    setCurrentUser(DEFAULT_EMPLOYEE_USER);
+  };
 
   const updateRolePermission = (role: Role, permission: Permission, enabled: boolean) => {
     setRolePermissions((prev) => {
@@ -133,7 +166,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (role === 'HRD_ADMIN') {
       setCurrentUser(DEFAULT_HRD_USER);
     } else {
-      // Switch back to Employee view
       const emps = storageService.getEmployees();
       const firstEmp = emps.find(e => e.status === 'AKTIF');
       if (firstEmp) {
@@ -179,6 +211,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         currentUser,
+        loginWithApi,
+        logout,
         switchRole,
         loginAsEmployee,
         availableEmployees,
@@ -186,6 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         rolePermissions,
         updateRolePermission,
         resetRolePermissions,
+        isLoadingAuth,
       }}
     >
       {children}
