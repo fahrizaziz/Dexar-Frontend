@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { Navbar, NavTabType } from './components/layout/Navbar';
 import { ToastContainer } from './components/common/Toast';
@@ -7,6 +7,7 @@ import { LoginModal } from './components/auth/LoginModal';
 import { Building2, Layers, FileText } from 'lucide-react';
 
 import { ProtectedView } from './components/common/ProtectedView';
+import { authService } from './services/authService';
 
 // Micro-Frontend Infrastructure imports
 import { MFE_REGISTRY } from './mfe/mfeRegistry';
@@ -20,6 +21,14 @@ function MainAppContent() {
   const [activeTab, setActiveTab] = useState<NavTabType>('ABSENSI_WFH');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMfeInspectorOpen, setIsMfeInspectorOpen] = useState(false);
+  const { isLoadingAuth } = useAuth();
+
+  // Otomatis buka modal login jika user belum terautentikasi saat pertama kali web diakses
+  useEffect(() => {
+    if (!isLoadingAuth && !authService.isAuthenticated()) {
+      setIsLoginModalOpen(true);
+    }
+  }, [isLoadingAuth]);
 
   // Micro-Frontend Route Grouping
   const isEmployeeMfeRoute =
