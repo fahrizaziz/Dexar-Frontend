@@ -13,15 +13,11 @@ import {
   LogOut,
   Sliders,
   CalendarDays,
-  FileText,
   Activity,
   MapPin,
-  DollarSign,
   FileSpreadsheet,
 } from 'lucide-react';
 import { formatTimeWIB, formatIndonesianDate } from '../../utils/dateUtils';
-
-import { Layers } from 'lucide-react';
 
 export type NavTabType =
   | 'ABSENSI_WFH'
@@ -45,10 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onOpenLoginModal,
-  onOpenMfeInspector,
 }) => {
   const { currentUser, switchRole, hasPermission } = useAuth();
-  const { resetAllData } = useApp();
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -85,23 +79,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-extrabold text-lg sm:text-xl tracking-tight text-zinc-100">
                   WFH Portal
                 </span>
-                <button
-                  onClick={onOpenMfeInspector}
-                  title="Buka Micro-Frontend (MFE) Inspector & DevTools"
-                  className="text-[10px] font-mono font-bold tracking-widest text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 px-2.5 py-0.5 rounded uppercase flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Layers className="w-3 h-3 text-emerald-400" />
-                  <span>MFE SHELL</span>
-                </button>
-                <a
-                  href="/Dokumentasi_API_WFH_Portal.docx"
-                  download="Dokumentasi_API_WFH_Portal.docx"
-                  title="Download Dokumentasi API Spesifikasi Backend (.docx)"
-                  className="text-[10px] font-mono font-bold tracking-widest text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 px-2.5 py-0.5 rounded uppercase flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <FileText className="w-3 h-3 text-sky-400" />
-                  <span>DOCX API</span>
-                </a>
               </div>
               <p className="text-xs text-zinc-400 hidden sm:block">
                 Sistem Absensi & Monitoring Karyawan
@@ -265,7 +242,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 transition-all text-left"
+                className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[#121215] hover:bg-zinc-800/80 border border-zinc-800 transition-all text-left cursor-pointer"
               >
                 <img
                   src={
@@ -312,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           switchRole('KARYAWAN');
                           setIsProfileMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-zinc-800 text-zinc-200 transition-colors text-xs font-medium"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-zinc-800 text-zinc-200 transition-colors text-xs font-medium cursor-pointer"
                       >
                         <Sparkles className="w-4 h-4 text-amber-400" />
                         <span>Switch Mode: Karyawan WFH</span>
@@ -324,7 +301,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         onOpenLoginModal();
                         setIsProfileMenuOpen(false);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-rose-950/40 text-rose-300 transition-colors text-xs font-medium"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-xl hover:bg-rose-950/40 text-rose-300 transition-colors text-xs font-medium cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 text-rose-400" />
                       <span>Keluar (Logout)</span>

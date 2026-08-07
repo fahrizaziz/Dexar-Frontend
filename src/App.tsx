@@ -4,7 +4,7 @@ import { AppProvider } from './context/AppContext';
 import { Navbar, NavTabType } from './components/layout/Navbar';
 import { ToastContainer } from './components/common/Toast';
 import { LoginModal } from './components/auth/LoginModal';
-import { Building2, Layers, FileText } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 import { ProtectedView } from './components/common/ProtectedView';
 import { authService } from './services/authService';
@@ -110,7 +110,7 @@ function MainAppContent() {
         </main>
       </div>
 
-      {/* Footer with MFE Inspector Trigger */}
+      {/* Footer */}
       <footer className="relative z-10 border-t border-zinc-800/80 bg-[#0c0c0e]/90 backdrop-blur-md py-6 mt-12 text-xs text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
@@ -122,25 +122,8 @@ function MainAppContent() {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
-            <a
-              href="/Dokumentasi_API_WFH_Portal.docx"
-              download="Dokumentasi_API_WFH_Portal.docx"
-              className="text-sky-400 hover:text-sky-300 font-bold flex items-center gap-1.5 transition-colors cursor-pointer bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-lg"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Download Spec API (.docx)</span>
-            </a>
-            <span className="text-zinc-600">•</span>
-            <button
-              onClick={() => setIsMfeInspectorOpen(true)}
-              className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors cursor-pointer bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Buka MFE DevTools Inspector</span>
-            </button>
-            <span className="text-zinc-600">•</span>
-            <span className="text-zinc-400">Decoupled Micro-Frontend Architecture</span>
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-zinc-500">
+            <span>© 2026 Enterprise WFH Portal</span>
           </div>
         </div>
       </footer>
