@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Employee, Department, Role } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, Link as LinkIcon } from 'lucide-react';
+import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -78,7 +78,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setDepartment(initialData.department || '');
       setPosition(initialData.position);
       setRole(initialData.role || 'KARYAWAN');
-      setStatus(initialData.status);
+      setStatus(initialData.status === 'NON_AKTIF' || initialData.status === 'INACTIVE' ? 'NON_AKTIF' : 'AKTIF');
       setJoinDate(initialData.joinDate);
       setAvatarUrl(initialData.avatarUrl);
       setWfhAllowance(initialData.wfhAllowanceDaysPerWeek || 3);
@@ -92,7 +92,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setDepartment(''); // Default to empty string for '-- Pilih Departemen --'
       setPosition('');
       setRole(''); // Default to empty string for '-- Pilih Role / Hak Akses --'
-      setStatus('AKTIF');
+      setStatus('AKTIF'); // Default to AKTIF for new onboarding
       setJoinDate(new Date().toISOString().split('T')[0]);
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
       setWfhAllowance(3);
@@ -254,17 +254,24 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </select>
           </div>
 
-          {/* Status */}
+          {/* Status Kepegawaian */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Status Kepegawaian *</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
-            >
-              <option value="AKTIF">Aktif Bekerja</option>
-              <option value="NON_AKTIF">Non-Aktif / Resigned</option>
-            </select>
+            {initialData ? (
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
+              >
+                <option value="AKTIF">Aktif Bekerja</option>
+                <option value="NON_AKTIF">Non-Aktif / Resigned</option>
+              </select>
+            ) : (
+              <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-emerald-400 text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Aktif Bekerja (Otomatis untuk Pegawai Baru)</span>
+              </div>
+            )}
           </div>
 
           {/* Join Date */}
