@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Employee, Department, Role } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, CheckCircle2 } from 'lucide-react';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -54,7 +54,6 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [joinDate, setJoinDate] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [wfhAllowance, setWfhAllowance] = useState<number>(0);
-  const [showUrlInput, setShowUrlInput] = useState(false);
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -307,22 +306,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </p>
           </div>
 
-          {/* Foto Profil / Avatar File Upload */}
+          {/* Foto Profil / Avatar File Upload Only */}
           <div className="sm:col-span-2 bg-slate-950/80 border border-slate-800/90 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <Camera className="w-4 h-4 text-indigo-400" />
-                <span>Foto Profil / Avatar Karyawan</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowUrlInput(!showUrlInput)}
-                className="text-[11px] font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-              >
-                <LinkIcon className="w-3 h-3" />
-                {showUrlInput ? 'Gunakan Upload File' : 'Gunakan Link URL'}
-              </button>
-            </div>
+            <label className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5 block">
+              <Camera className="w-4 h-4 text-indigo-400" />
+              <span>Foto Profil / Avatar Karyawan</span>
+            </label>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-indigo-500/40 bg-slate-900 shrink-0 shadow-lg">
@@ -336,32 +325,19 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
                 />
               </div>
 
-              {showUrlInput ? (
-                <div className="w-full">
+              <div className="w-full space-y-2">
+                <label className="flex items-center justify-center gap-2 w-full p-3 bg-indigo-600/10 hover:bg-indigo-600/20 border border-dashed border-indigo-500/40 hover:border-indigo-500 rounded-xl cursor-pointer transition-all text-xs text-indigo-300 font-medium">
+                  <Upload className="w-4 h-4" />
+                  <span>Upload File Foto Karyawan (JPG / PNG / WEBP)</span>
                   <input
-                    type="text"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl p-2.5 text-slate-100 text-xs outline-none"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileChange}
+                    className="hidden"
                   />
-                  <p className="text-[10px] text-slate-500 mt-1">Masukkan URL gambar profil karyawan dari internet.</p>
-                </div>
-              ) : (
-                <div className="w-full space-y-2">
-                  <label className="flex items-center justify-center gap-2 w-full p-3 bg-indigo-600/10 hover:bg-indigo-600/20 border border-dashed border-indigo-500/40 hover:border-indigo-500 rounded-xl cursor-pointer transition-all text-xs text-indigo-300 font-medium">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload File Foto (JPG / PNG / WEBP)</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                  <p className="text-[10px] text-slate-500">Pilih berkas foto dari komputer/perangkat Anda. Otomatis diproses menjadi avatar.</p>
-                </div>
-              )}
+                </label>
+                <p className="text-[10px] text-slate-500">Pilih berkas foto dari komputer Anda untuk foto profil resmi karyawan.</p>
+              </div>
             </div>
           </div>
         </div>
