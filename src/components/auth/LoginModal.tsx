@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import { Lock, Mail, ArrowRight, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
 
 interface LoginModalProps {
@@ -17,6 +18,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const isAuthenticated = authService.isAuthenticated();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +48,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       title="Masuk ke Portal Absensi WFH"
       subtitle="Masukkan Email dan Password Anda untuk mengakses sistem"
       maxWidth="md"
+      closeOnOverlayClick={false}
+      hideCloseButton={!isAuthenticated}
     >
       <div className="space-y-6">
         {errorMsg && (

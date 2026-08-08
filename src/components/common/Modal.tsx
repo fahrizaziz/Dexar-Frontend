@@ -9,6 +9,8 @@ interface ModalProps {
   subtitle?: string;
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+  closeOnOverlayClick?: boolean;
+  hideCloseButton?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,10 +20,12 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   children,
   maxWidth = '2xl',
+  closeOnOverlayClick = true,
+  hideCloseButton = false,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && closeOnOverlayClick) {
         onClose();
       }
     };
@@ -33,7 +37,7 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = 'auto';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnOverlayClick]);
 
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -54,7 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={closeOnOverlayClick ? onClose : undefined}
             className="fixed inset-0 bg-black/80 backdrop-blur-md"
           />
 
@@ -72,13 +76,15 @@ export const Modal: React.FC<ModalProps> = ({
                 <h3 className="text-xl font-bold text-zinc-100 tracking-tight">{title}</h3>
                 {subtitle && <p className="text-xs text-zinc-400 mt-1 font-mono">{subtitle}</p>}
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-xl transition-colors border border-transparent hover:border-zinc-700"
-                aria-label="Tutup modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {!hideCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-xl transition-colors border border-transparent hover:border-zinc-700 cursor-pointer"
+                  aria-label="Tutup modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             {/* Content Body */}
