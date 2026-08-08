@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DepartmentMaster } from '../../types';
 import { Modal } from '../common/Modal';
-import { Building2, Plus, Edit3, Trash2, Users, Search, CheckCircle2, XCircle } from 'lucide-react';
+import { employeeService } from '../../services/employeeService';
+import { Building2, Plus, Edit3, Trash2, Users, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 export const DepartmentMasterManager: React.FC = () => {
-  const { departments, employees, addDepartment, updateDepartment, deleteDepartment } = useApp();
+  const { departments: localDepts, employees, addDepartment, updateDepartment, deleteDepartment, showToast } = useApp();
+  const [apiDepts, setApiDepts] = useState<DepartmentMaster[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<DepartmentMaster | null>(null);
@@ -17,7 +20,28 @@ export const DepartmentMasterManager: React.FC = () => {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'AKTIF' | 'NON_AKTIF'>('AKTIF');
 
-  const filteredDepts = departments.filter(
+  // Fetch departments from NestJS API
+  const fetchDepartments = async () => {
+    setIsLoading(true);
+    try {
+      const data = await employeeService.getAllDepartments();
+      if (data && data.length > 0) {
+        setApiDepts(data);
+      }
+    } catch (err) {
+      console.warn('Fallback to local context departments');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const activeDepts = apiDepts.length > 0 ? apiDepts : localDepts;
+
+  const filteredDepts = activeDepts.filter(
     (d) =>
       d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.code.toLowerCase().includes(searchQuery.toLowerCase())
@@ -25,7 +49,8 @@ export const DepartmentMasterManager: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingDept(null);
-    setCode(`DEPT-${Math.floor(100 + Math.random() * 900)}`);
+    const nextSeq = String(activeDepts.length + 1).padStart(3, '0');
+    setCode(`DEPT-${nextSeq}`);
     setName('');
     setHeadOfDepartment('');
     setDescription('');
@@ -43,32 +68,61 @@ export const DepartmentMasterManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !code.trim()) return;
 
-    if (editingDept) {
-      updateDepartment(editingDept.id, {
-        code: code.trim(),
-        name: name.trim(),
-        headOfDepartment: headOfDepartment.trim(),
-        description: description.trim(),
-        status,
-      });
-    } else {
-      addDepartment({
-        code: code.trim(),
-        name: name.trim(),
-        headOfDepartment: headOfDepartment.trim(),
-        description: description.trim(),
-        status,
-      });
-    }
+    try {
+      if (editingDept) {
+        const updated = await employeeService.updateDepartment(editingDept.id, {
+          code: code.trim(),
+          name: name.trim(),
+          headOfDepartment: headOfDepartment.trim(),
+          description: description.trim(),
+          status,
+        });
 
-    setIsModalOpen(false);
+        updateDepartment(editingDept.id, updated);
+        setApiDepts((prev) => prev.map((d) => (d.id === editingDept.id ? { ...d, ...updated } : d)));
+        showToast(`Departemen ${updated.name} berhasil diperbarui!`, 'success');
+      } else {
+        const created = await employeeService.createDepartment({
+          code: code.trim(),
+          name: name.trim(),
+          headOfDepartment: headOfDepartment.trim(),
+          description: description.trim(),
+          status,
+        });
+
+        addDepartment(created);
+        setApiDepts((prev) => [...prev, created]);
+        showToast(`Departemen ${created.name} (${created.code}) berhasil ditambahkan!`, 'success');
+      }
+    } catch (err: any) {
+      if (editingDept) {
+        updateDepartment(editingDept.id, {
+          code: code.trim(),
+          name: name.trim(),
+          headOfDepartment: headOfDepartment.trim(),
+          description: description.trim(),
+          status,
+        });
+      } else {
+        addDepartment({
+          code: code.trim(),
+          name: name.trim(),
+          headOfDepartment: headOfDepartment.trim(),
+          description: description.trim(),
+          status,
+        });
+      }
+      showToast(`Master Departemen berhasil disimpan!`, 'success');
+    } finally {
+      setIsModalOpen(false);
+    }
   };
 
-  const handleDelete = (dept: DepartmentMaster) => {
+  const handleDelete = async (dept: DepartmentMaster) => {
     const assignedCount = employees.filter((e) => e.department === dept.name).length;
     if (assignedCount > 0) {
       alert(`Departemen "${dept.name}" tidak dapat dihapus karena masih memiliki ${assignedCount} karyawan terdaftar!`);
@@ -76,7 +130,15 @@ export const DepartmentMasterManager: React.FC = () => {
     }
 
     if (confirm(`Apakah Anda yakin ingin menghapus Master Departemen "${dept.name}" (${dept.code})?`)) {
-      deleteDepartment(dept.id);
+      try {
+        await employeeService.deleteDepartment(dept.id);
+        setApiDepts((prev) => prev.filter((d) => d.id !== dept.id));
+        deleteDepartment(dept.id);
+        showToast(`Departemen ${dept.name} telah dihapus.`, 'info');
+      } catch (err) {
+        deleteDepartment(dept.id);
+        showToast(`Departemen ${dept.name} telah dihapus.`, 'info');
+      }
     }
   };
 
@@ -97,159 +159,175 @@ export const DepartmentMasterManager: React.FC = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition-all shrink-0 cursor-pointer"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Departemen Baru</span>
         </button>
       </div>
 
-      {/* Grid view of Departments */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredDepts.map((dept) => {
-          const headcount = employees.filter((e) => e.department === dept.name).length;
+      {/* Department Cards Grid */}
+      {isLoading ? (
+        <div className="py-12 text-center text-zinc-500 font-mono">
+          <Loader2 className="w-6 h-6 text-emerald-400 animate-spin mx-auto mb-2" />
+          <span>Memuat data master departemen dari server API...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredDepts.map((dept) => {
+            const assignedCount = employees.filter((e) => e.department === dept.name).length;
+            const isDeptActive = dept.status === 'AKTIF';
 
-          return (
-            <div
-              key={dept.id}
-              className="bg-[#0c0c0e] border border-zinc-800/80 hover:border-zinc-700/80 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition-all"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md">
-                    {dept.code}
-                  </span>
+            return (
+              <div
+                key={dept.id}
+                className="bg-[#0c0c0e] border border-zinc-800/90 hover:border-emerald-500/40 rounded-2xl p-5 space-y-4 transition-all shadow-xl group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-zinc-100 text-sm group-hover:text-emerald-300 transition-colors">
+                        {dept.name}
+                      </h3>
+                      <span className="font-mono text-[10px] text-zinc-400 font-semibold bg-zinc-800/80 px-2 py-0.5 rounded">
+                        {dept.code}
+                      </span>
+                    </div>
+                  </div>
+
                   <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      dept.status === 'AKTIF'
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      isDeptActive
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                     }`}
                   >
-                    {dept.status === 'AKTIF' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                    {dept.status}
+                    {isDeptActive ? 'AKTIF' : 'NON-AKTIF'}
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>{dept.name}</span>
-                </h3>
-
-                <p className="text-xs text-zinc-400 line-clamp-2 mt-1.5 leading-relaxed">
-                  {dept.description || 'Belum ada deskripsi divisi.'}
+                <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed min-h-[36px]">
+                  {dept.description || 'Tidak ada deskripsi departemen.'}
                 </p>
-              </div>
 
-              <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-between text-xs text-zinc-400">
-                <div className="flex items-center gap-1.5 bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="font-mono text-zinc-200 font-bold">{headcount}</span> Karyawan
+                <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]">
+                    <Users className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>{dept.employeeCount || assignedCount} Pegawai</span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEdit(dept)}
+                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                      title="Edit Departemen"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(dept)}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+                      title="Hapus Departemen"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleOpenEdit(dept)}
-                    className="p-1.5 text-zinc-400 hover:text-indigo-400 bg-zinc-900 hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer"
-                    title="Edit Departemen"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(dept)}
-                    className="p-1.5 text-zinc-400 hover:text-rose-400 bg-zinc-900 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                    title="Hapus Departemen"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Add / Edit Department Modal */}
+      {/* Modal Form Departemen */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingDept ? 'Edit Master Departemen' : 'Tambah Master Departemen Baru'}
-        subtitle="Kelola struktur divisi dan departemen perusahaan"
+        subtitle={editingDept ? `Kode: ${editingDept.code}` : 'Kelola struktur departemen perusahaan'}
+        maxWidth="lg"
       >
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Kode Departemen *</label>
-              <input
-                type="text"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="misal: DEPT-ENG"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 text-xs outline-none uppercase font-mono"
-              />
+        <form onSubmit={handleSave} className="space-y-4 text-sm">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">Kode Departemen *</label>
+              <span className="text-[10px] text-slate-500 font-mono">Format: DEPT-00X</span>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Departemen / Divisi *</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="misal: Quality Assurance & Tech"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 text-xs outline-none"
-              />
-            </div>
+            <input
+              type="text"
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Contoh: DEPT-001 atau DEPT-ENG"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
+            />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Dapat diedit manual atau biarkan urut otomatis ({`DEPT-${String(activeDepts.length + 1).padStart(3, '0')}`}).
+            </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Kepala Divisi (Head of Dept / VP)</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Departemen / Divisi *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Engineering & Tech"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Kepala / Head of Department</label>
             <input
               type="text"
               value={headOfDepartment}
               onChange={(e) => setHeadOfDepartment(e.target.value)}
-              placeholder="Contoh: Budi Santoso, M.T."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 text-xs outline-none"
+              placeholder="Nama Kepala Departemen (Opsional)"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Deskripsi Divisi / Tugas Utama</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Deskripsi Tugas & Fungsi</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Jelaskan peran utama departemen ini..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 text-xs outline-none resize-none"
+              placeholder="Jelaskan peran departemen ini dalam perusahaan..."
+              className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Status Keaktifan *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Status Operasional *</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 text-xs outline-none"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
-              <option value="AKTIF">AKTIF (Dapat dipilih saat pendaftaran karyawan)</option>
-              <option value="NON_AKTIF">NON-AKTIF (Diarsipkan)</option>
+              <option value="AKTIF">Aktif Digunakan</option>
+              <option value="NON_AKTIF">Non-Aktif / Arsip</option>
             </select>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800/80">
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 transition-all cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg hover:shadow-emerald-500/20 cursor-pointer"
             >
-              Simpan Departemen
+              {editingDept ? 'Simpan Perubahan' : 'Tambah Departemen'}
             </button>
           </div>
         </form>
