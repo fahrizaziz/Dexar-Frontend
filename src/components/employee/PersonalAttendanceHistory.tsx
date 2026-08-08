@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { AttendanceRecord } from '../../types';
 import { formatIndonesianDate } from '../../utils/dateUtils';
 import { exportAttendanceToCSV } from '../../utils/exportUtils';
-import { Calendar, MapPin, CheckCircle2, Clock, Eye, FileText, Download, ShieldCheck, FileSpreadsheet } from 'lucide-react';
+import { attendanceService } from '../../services/attendanceService';
+import { Calendar, MapPin, CheckCircle2, Clock, Eye, FileText, Download, ShieldCheck, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 
 export const PersonalAttendanceHistory: React.FC = () => {
@@ -12,10 +13,35 @@ export const PersonalAttendanceHistory: React.FC = () => {
   const { attendanceRecords, leaveRequests } = useApp();
 
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [fetchedRecords, setFetchedRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Filter records belonging to this employee
-  const myRecords = attendanceRecords.filter((r) => r.employeeId === currentUser.id);
-  const myLeaves = leaveRequests.filter((r) => r.employeeId === currentUser.id);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      try {
+        const records = await attendanceService.getMyHistory();
+        if (isMounted && records.length > 0) {
+          setFetchedRecords(records);
+        }
+      } catch (err) {
+        console.warn('API getMyHistory fallback to context state');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchHistory();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Filter records belonging to this employee (prefer fetched, fallback to context state)
+  const myRecords = fetchedRecords.length > 0
+    ? fetchedRecords
+    : attendanceRecords.filter((r) => r.employeeId === currentUser.id);
 
   return (
     <div className="space-y-6">
@@ -33,7 +59,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => exportAttendanceToCSV(myRecords, `Rekap_Absensi_${currentUser.name.replace(/ /g, '_')}.csv`)}
-            className="px-3.5 py-1.5 rounded-lg bg-[#0c0c0e] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-1.5 rounded-lg bg-[#0c0c0e] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
@@ -45,7 +71,12 @@ export const PersonalAttendanceHistory: React.FC = () => {
         </div>
       </div>
 
-      {myRecords.length === 0 ? (
+      {isLoading ? (
+        <div className="bg-[#0c0c0e] border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400 space-y-3 font-mono">
+          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+          <p className="text-xs">Memuat riwayat absensi dari server...</p>
+        </div>
+      ) : myRecords.length === 0 ? (
         <div className="bg-[#0c0c0e] border border-zinc-800 rounded-2xl p-12 text-center text-zinc-400">
           <Calendar className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
           <p className="font-semibold text-zinc-200">Belum ada riwayat absensi WFH</p>
@@ -99,23 +130,35 @@ export const PersonalAttendanceHistory: React.FC = () => {
 
                   <p className="text-xs text-zinc-400 flex items-center gap-1 line-clamp-1">
                     <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    {record.location.address}
+                    <span>{record.location.address}</span>
                   </p>
 
-                  <div className="bg-[#09090b] p-3 rounded-xl border border-zinc-800/90 text-xs text-zinc-300 line-clamp-2">
-                    <span className="text-zinc-500 font-mono block text-[10px]">Work Plan:</span>
-                    {record.workPlan}
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-mono text-zinc-400">Rencana Kerja (Work Plan):</p>
+                    <p className="text-xs text-zinc-300 bg-[#09090b] p-2.5 rounded-xl border border-zinc-800/80 line-clamp-2 leading-relaxed">
+                      {record.workPlan}
+                    </p>
                   </div>
+
+                  {record.workSummary && (
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-mono text-zinc-400">Rekap Hasil Kerja (Summary):</p>
+                      <p className="text-xs text-zinc-300 bg-[#09090b] p-2.5 rounded-xl border border-zinc-800/80 line-clamp-2 leading-relaxed">
+                        {record.workSummary}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
+              {/* Card Footer Action */}
               <div className="p-4 pt-0">
                 <button
                   onClick={() => setSelectedRecord(record)}
-                  className="w-full bg-[#121215] hover:bg-zinc-800 text-zinc-200 font-medium text-xs py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 border border-zinc-800"
+                  className="w-full py-2 bg-[#121215] hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-indigo-300 hover:text-indigo-200 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Lihat Detail Absen</span>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Lihat Detail GPS & Audit</span>
                 </button>
               </div>
             </div>
@@ -123,109 +166,72 @@ export const PersonalAttendanceHistory: React.FC = () => {
         </div>
       )}
 
-      {/* Employee's Submitted Leave & Permit Requests Section */}
-      {myLeaves.length > 0 && (
-        <div className="bg-[#0c0c0e] border border-zinc-800 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-            <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2 font-mono uppercase tracking-wider">
-              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
-              <span>Status Pengajuan Izin, Cuti & Tukar Hari Saya</span>
-            </h3>
-            <span className="text-xs text-zinc-500 font-mono">{myLeaves.length} Pengajuan</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {myLeaves.map((leave) => (
-              <div key={leave.id} className="bg-[#09090b] border border-zinc-800/90 rounded-xl p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    {leave.type}
-                  </span>
-                  <span
-                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded ${
-                      leave.status === 'APPROVED'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : leave.status === 'REJECTED'
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
-                    }`}
-                  >
-                    {leave.status === 'APPROVED' ? '✓ Disetujui' : leave.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu Approval'}
-                  </span>
-                </div>
-
-                <p className="text-xs text-zinc-300">
-                  <strong className="text-zinc-400 font-normal">Tanggal:</strong> {leave.startDate} s/d {leave.endDate}
-                </p>
-                <p className="text-xs text-zinc-400 italic">"{leave.reason}"</p>
-
-                {leave.hrdNotes && (
-                  <p className="text-[11px] text-indigo-300 bg-indigo-500/10 p-2 rounded border border-indigo-500/20 font-mono">
-                    Catatan HRD: {leave.hrdNotes}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Detail Modal */}
-      {selectedRecord && (
-        <Modal
-          isOpen={!!selectedRecord}
-          onClose={() => setSelectedRecord(null)}
-          title={`Detail Absensi WFH - ${selectedRecord.date}`}
-          subtitle={selectedRecord.employeeName}
-          maxWidth="xl"
-        >
-          <div className="space-y-4 text-sm">
-            <div className="rounded-xl overflow-hidden border border-zinc-800 bg-[#09090b]">
-              <img
-                src={selectedRecord.photoProofUrl}
-                alt="Foto Absen"
-                className="w-full h-64 object-cover"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#09090b] p-3.5 rounded-xl border border-zinc-800">
-                <span className="text-xs text-zinc-400 block font-medium">Jam Masuk:</span>
-                <span className="text-base font-mono font-bold text-emerald-400">
+      {/* Modal Detail Rekam Presensi */}
+      <Modal
+        isOpen={!!selectedRecord}
+        onClose={() => setSelectedRecord(null)}
+        title="Detail Presensi WFH Karyawan"
+        subtitle={`Audit log presensi tanggal ${selectedRecord ? formatIndonesianDate(selectedRecord.date) : ''}`}
+        maxWidth="lg"
+      >
+        {selectedRecord && (
+          <div className="space-y-6 text-xs font-sans">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-2">
+                <p className="font-mono text-zinc-400 uppercase text-[10px]">Waktu Absen Masuk</p>
+                <p className="text-base font-extrabold text-emerald-400 font-mono">
                   {selectedRecord.clockInTime} WIB
-                </span>
+                </p>
               </div>
 
-              <div className="bg-[#09090b] p-3.5 rounded-xl border border-zinc-800">
-                <span className="text-xs text-zinc-400 block font-medium">Jam Pulang:</span>
-                <span className="text-base font-mono font-bold text-sky-400">
+              <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-2">
+                <p className="font-mono text-zinc-400 uppercase text-[10px]">Waktu Absen Pulang</p>
+                <p className="text-base font-extrabold text-sky-400 font-mono">
                   {selectedRecord.clockOutTime ? `${selectedRecord.clockOutTime} WIB` : 'Belum Absen Pulang'}
-                </span>
+                </p>
               </div>
             </div>
 
-            <div className="bg-[#09090b] p-3.5 rounded-xl border border-zinc-800 space-y-1">
-              <span className="text-xs text-zinc-400 block font-medium">Lokasi GPS:</span>
-              <p className="text-zinc-200 text-xs flex items-center gap-1.5">
+            <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-3">
+              <p className="font-mono text-zinc-400 uppercase text-[10px]">Bukti Tangkapan Foto Webcam</p>
+              <div className="h-56 rounded-xl overflow-hidden border border-zinc-800">
+                <img
+                  src={selectedRecord.photoProofUrl}
+                  alt="Bukti Absen"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-2">
+              <p className="font-mono text-zinc-400 uppercase text-[10px]">Koordinat & Alamat GPS Terverifikasi</p>
+              <p className="font-semibold text-zinc-200 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                {selectedRecord.location.address}
+                <span>{selectedRecord.location.address}</span>
+              </p>
+              <p className="font-mono text-[11px] text-zinc-400">
+                Latitude: {selectedRecord.location.latitude}, Longitude: {selectedRecord.location.longitude}
               </p>
             </div>
 
-            <div className="bg-[#09090b] p-3.5 rounded-xl border border-zinc-800 space-y-1">
-              <span className="text-xs text-zinc-400 block font-medium">Rencana Kerja:</span>
-              <p className="text-zinc-300 text-xs">{selectedRecord.workPlan}</p>
+            <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-2">
+              <p className="font-mono text-zinc-400 uppercase text-[10px]">Jurnal Rencana Kerja (Work Plan)</p>
+              <p className="text-zinc-200 leading-relaxed bg-[#0c0c0e] p-3 rounded-lg border border-zinc-800">
+                {selectedRecord.workPlan}
+              </p>
             </div>
 
             {selectedRecord.workSummary && (
-              <div className="bg-[#09090b] p-3.5 rounded-xl border border-zinc-800 space-y-1">
-                <span className="text-xs text-zinc-400 block font-medium">Hasil Pekerjaan:</span>
-                <p className="text-zinc-300 text-xs">{selectedRecord.workSummary}</p>
+              <div className="bg-[#09090b] border border-zinc-800 p-4 rounded-xl space-y-2">
+                <p className="font-mono text-zinc-400 uppercase text-[10px]">Rekap Ringkasan Hasil Kerja (Work Summary)</p>
+                <p className="text-zinc-200 leading-relaxed bg-[#0c0c0e] p-3 rounded-lg border border-zinc-800">
+                  {selectedRecord.workSummary}
+                </p>
               </div>
             )}
           </div>
-        </Modal>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

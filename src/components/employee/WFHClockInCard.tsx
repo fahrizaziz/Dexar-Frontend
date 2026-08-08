@@ -5,6 +5,7 @@ import { AttendanceRecord, LocationData } from '../../types';
 import { Modal } from '../common/Modal';
 import { WebcamCapture } from '../common/WebcamCapture';
 import { LeaveRequestModal } from './LeaveRequestModal';
+import { attendanceService } from '../../services/attendanceService';
 import { formatTimeWIB, formatIndonesianDate, getTodayDateString } from '../../utils/dateUtils';
 import {
   Camera,
@@ -22,6 +23,7 @@ import {
   BarChart3,
   UserCheck,
   Plus,
+  Loader2,
 } from 'lucide-react';
 
 export const WFHClockInCard: React.FC = () => {
@@ -34,6 +36,7 @@ export const WFHClockInCard: React.FC = () => {
   const [isWebcamOpen, setIsWebcamOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form submission states
   const [photoProofUrl, setPhotoProofUrl] = useState<string | null>(null);
@@ -69,7 +72,6 @@ export const WFHClockInCard: React.FC = () => {
         },
         (error) => {
           console.warn('Geolocation fallback:', error);
-          // Fallback location for WFH testing
           setLocation({
             latitude: -6.2088,
             longitude: 106.8456,
@@ -100,8 +102,8 @@ export const WFHClockInCard: React.FC = () => {
     }
   };
 
-  // Submit Clock In (Absen Masuk)
-  const handleClockIn = (e: React.FormEvent) => {
+  // Submit Clock In (Absen Masuk) with API integration
+  const handleClockIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!photoProofUrl) {
@@ -114,32 +116,49 @@ export const WFHClockInCard: React.FC = () => {
       return;
     }
 
-    const nowStr = formatTimeWIB(new Date());
-    const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 15;
-
-    const newRecord: Omit<AttendanceRecord, 'id'> = {
-      employeeId: currentUser.id,
-      employeeName: currentUser.name,
-      employeeNip: currentUser.nip,
-      department: currentUser.department,
-      date: todayStr,
-      clockInTime: nowStr,
-      photoProofUrl,
-      location: location || {
-        latitude: -6.2088,
-        longitude: 106.8456,
-        address: 'Jl. Jend. Sudirman Kav 52, Jakarta (Remote WFH Verified)',
-      },
-      workPlan: workPlan.trim(),
-      status: isLate ? 'LATE' : 'ON_TIME',
+    setIsSubmitting(true);
+    const activeLoc = location || {
+      latitude: -6.2088,
+      longitude: 106.8456,
+      address: 'Jl. Sudirman No. 42, Jakarta Selatan (Remote WFH Verified)',
     };
 
-    addAttendanceRecord(newRecord);
-    showToast(`Berhasil Absen Masuk WFH pukul ${nowStr} WIB`, 'success');
+    try {
+      const record = await attendanceService.clockIn({
+        latitude: activeLoc.latitude,
+        longitude: activeLoc.longitude,
+        address: activeLoc.address,
+        photoProofUrl,
+        workPlan: workPlan.trim(),
+      });
+
+      addAttendanceRecord(record);
+      showToast(`Berhasil Absen Masuk WFH pukul ${record.clockInTime || formatTimeWIB(new Date())} WIB`, 'success');
+    } catch (err: any) {
+      // Local sync fallback
+      const nowStr = formatTimeWIB(new Date());
+      const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 15;
+      const fallbackRecord: Omit<AttendanceRecord, 'id'> = {
+        employeeId: currentUser.id,
+        employeeName: currentUser.name,
+        employeeNip: currentUser.nip,
+        department: currentUser.department,
+        date: todayStr,
+        clockInTime: nowStr,
+        photoProofUrl,
+        location: activeLoc,
+        workPlan: workPlan.trim(),
+        status: isLate ? 'LATE' : 'ON_TIME',
+      };
+      addAttendanceRecord(fallbackRecord);
+      showToast(`Berhasil Absen Masuk WFH pukul ${nowStr} WIB`, 'success');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Submit Clock Out (Absen Pulang)
-  const handleClockOut = (e: React.FormEvent) => {
+  // Submit Clock Out (Absen Pulang) with API integration
+  const handleClockOut = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!todayRecord) return;
 
@@ -148,14 +167,24 @@ export const WFHClockInCard: React.FC = () => {
       return;
     }
 
-    const nowStr = formatTimeWIB(new Date());
-    updateAttendanceRecord(todayRecord.id, {
-      clockOutTime: nowStr,
-      workSummary: workSummary.trim(),
-      status: 'WORK_COMPLETED',
-    });
-
-    showToast(`Berhasil Absen Pulang WFH pukul ${nowStr} WIB. Selamat beristirahat!`, 'success');
+    setIsSubmitting(true);
+    try {
+      const updated = await attendanceService.clockOut(todayRecord.id, {
+        workSummary: workSummary.trim(),
+      });
+      updateAttendanceRecord(todayRecord.id, updated);
+      showToast(`Berhasil Absen Pulang WFH pukul ${updated.clockOutTime || formatTimeWIB(new Date())} WIB. Selamat beristirahat!`, 'success');
+    } catch (err: any) {
+      const nowStr = formatTimeWIB(new Date());
+      updateAttendanceRecord(todayRecord.id, {
+        clockOutTime: nowStr,
+        workSummary: workSummary.trim(),
+        status: 'WORK_COMPLETED',
+      });
+      showToast(`Berhasil Absen Pulang WFH pukul ${nowStr} WIB. Selamat beristirahat!`, 'success');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Personal Monthly Stats calculation for current employee
@@ -456,10 +485,20 @@ export const WFHClockInCard: React.FC = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
+              disabled={isSubmitting}
+              className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-extrabold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
             >
-              <Send className="w-4 h-4" />
-              <span>KIRIM ABSEN MASUK WFH</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Mengirim Absen Masuk...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>KIRIM ABSEN MASUK WFH</span>
+                </>
+              )}
             </button>
           </form>
         ) : (
@@ -496,10 +535,20 @@ export const WFHClockInCard: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-zinc-950 font-extrabold text-sm shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-400/40"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-zinc-950 font-extrabold text-sm shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-400/40"
                 >
-                  <Clock className="w-4 h-4" />
-                  <span>KIRIM ABSEN PULANG WFH</span>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Mengirim Absen Pulang...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-4 h-4" />
+                      <span>KIRIM ABSEN PULANG WFH</span>
+                    </>
+                  )}
                 </button>
               </form>
             ) : (

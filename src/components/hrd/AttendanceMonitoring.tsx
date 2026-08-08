@@ -5,6 +5,7 @@ import { AttendanceDetailModal } from './AttendanceDetailModal';
 import { AttendanceAnalyticsModal } from './AttendanceAnalyticsModal';
 import { formatIndonesianDate, getTodayDateString } from '../../utils/dateUtils';
 import { exportAttendanceToCSV, exportLeaveRequestsToCSV } from '../../utils/exportUtils';
+import { attendanceService } from '../../services/attendanceService';
 import { Pagination } from '../common/Pagination';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import {
@@ -28,6 +29,7 @@ import {
   PieChart as PieIcon,
   Building2,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 
 export const AttendanceMonitoring: React.FC = () => {
@@ -41,6 +43,10 @@ export const AttendanceMonitoring: React.FC = () => {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'PRESENSI' | 'PERMOHONAN_CUTI'>('PRESENSI');
 
+  // Backend fetched records
+  const [fetchedMonitoring, setFetchedMonitoring] = useState<AttendanceRecord[]>([]);
+  const [isLoadingMonitoring, setIsLoadingMonitoring] = useState(false);
+
   // Pagination states for Presensi & Cuti
   const [currentPagePresensi, setCurrentPagePresensi] = useState(1);
   const [itemsPerPagePresensi, setItemsPerPagePresensi] = useState(5);
@@ -50,13 +56,35 @@ export const AttendanceMonitoring: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
+  // Fetch monitoring records from API Gateway
+  const fetchMonitoringData = async () => {
+    setIsLoadingMonitoring(true);
+    try {
+      const records = await attendanceService.getHrdMonitoring(searchQuery, selectedDept);
+      if (records.length > 0) {
+        setFetchedMonitoring(records);
+      }
+    } catch (err) {
+      console.warn('API getHrdMonitoring fallback to local context state');
+    } finally {
+      setIsLoadingMonitoring(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMonitoringData();
+  }, [selectedDept]);
+
   useEffect(() => {
     setCurrentPagePresensi(1);
     setCurrentPageCuti(1);
   }, [searchQuery, selectedDept, selectedDateRange, selectedStatus]);
 
+  // Combined source (prefer fetched API, fallback to context state)
+  const activeRecordsSource = fetchedMonitoring.length > 0 ? fetchedMonitoring : attendanceRecords;
+
   // Filter Attendance Logs
-  const filteredRecords = attendanceRecords.filter((record) => {
+  const filteredRecords = activeRecordsSource.filter((record) => {
     const matchesSearch =
       record.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.employeeNip.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,10 +112,10 @@ export const AttendanceMonitoring: React.FC = () => {
   );
 
   // Calculate Metrics
-  const totalTodayRecords = attendanceRecords.filter((r) => r.date === todayStr).length;
-  const totalOnTimeToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'ON_TIME').length;
-  const totalLateToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'LATE').length;
-  const totalCompletedToday = attendanceRecords.filter((r) => r.date === todayStr && r.clockOutTime).length;
+  const totalTodayRecords = activeRecordsSource.filter((r) => r.date === todayStr).length;
+  const totalOnTimeToday = activeRecordsSource.filter((r) => r.date === todayStr && r.status === 'ON_TIME').length;
+  const totalLateToday = activeRecordsSource.filter((r) => r.date === todayStr && r.status === 'LATE').length;
+  const totalCompletedToday = activeRecordsSource.filter((r) => r.date === todayStr && r.clockOutTime).length;
 
   return (
     <div className="space-y-6">
@@ -144,7 +172,7 @@ export const AttendanceMonitoring: React.FC = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Monitoring Presensi Masuk & Pulang ({attendanceRecords.length})</span>
+          <span>Monitoring Presensi Masuk & Pulang ({activeRecordsSource.length})</span>
         </button>
 
         <button
@@ -222,7 +250,14 @@ export const AttendanceMonitoring: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/80">
-                  {paginatedRecords.length === 0 ? (
+                  {isLoadingMonitoring ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono">
+                        <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
+                        <span>Memuat data absensi karyawan...</span>
+                      </td>
+                    </tr>
+                  ) : paginatedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono">
                         Tidak ditemukan data absensi yang memenuhi kriteria filter.
