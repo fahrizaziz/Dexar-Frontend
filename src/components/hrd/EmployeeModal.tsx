@@ -49,7 +49,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState<string>('');
   const [position, setPosition] = useState('');
-  const [role, setRole] = useState<Role>('KARYAWAN');
+  const [role, setRole] = useState<string>('');
   const [status, setStatus] = useState<'AKTIF' | 'NON_AKTIF'>('AKTIF');
   const [joinDate, setJoinDate] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -91,7 +91,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setPhone('0812-');
       setDepartment(''); // Default to empty string for '-- Pilih Departemen --'
       setPosition('');
-      setRole('KARYAWAN');
+      setRole(''); // Default to empty string for '-- Pilih Role / Hak Akses --'
       setStatus('AKTIF');
       setJoinDate(new Date().toISOString().split('T')[0]);
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
@@ -108,7 +108,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       phone: phone.trim(),
       department: (department || 'Engineering & Tech') as Department,
       position: position.trim(),
-      role,
+      role: (role || 'KARYAWAN') as Role,
       status,
       joinDate,
       avatarUrl: avatarUrl || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`,
@@ -243,10 +243,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Role / Hak Akses Sistem *</label>
             <select
+              required
               value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none"
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
+              <option value="" disabled>-- Pilih Role / Hak Akses Sistem --</option>
               <option value="KARYAWAN">Karyawan (User Standard)</option>
               <option value="HRD_ADMIN">Admin HRD & Manager</option>
             </select>
@@ -258,7 +260,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
               <option value="AKTIF">Aktif Bekerja</option>
               <option value="NON_AKTIF">Non-Aktif / Resigned</option>
