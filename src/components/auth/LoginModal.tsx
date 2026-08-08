@@ -125,7 +125,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               </>
             ) : (
               <>
-                <span>Masuk ke Sistem</span>
+                <span>Login</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
