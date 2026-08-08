@@ -431,12 +431,11 @@ export const PayrollSummaryReport: React.FC = () => {
                 <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-emerald-400">Rp</span>
                 <input
                   type="number"
-                  required
                   min={0}
                   step={5000}
-                  value={editWfhRate}
-                  onChange={(e) => setEditWfhRate(e.target.value)}
-                  placeholder="50000"
+                  value={editWfhRate === '0' || editWfhRate === '' ? '' : editWfhRate}
+                  onChange={(e) => setEditWfhRate(e.target.value === '' ? '0' : e.target.value)}
+                  placeholder="0 (Contoh: 50000)"
                   className="w-full bg-zinc-950 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />
               </div>
@@ -449,12 +448,11 @@ export const PayrollSummaryReport: React.FC = () => {
                 <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-rose-400">Rp</span>
                 <input
                   type="number"
-                  required
                   min={0}
                   step={5000}
-                  value={editLateRate}
-                  onChange={(e) => setEditLateRate(e.target.value)}
-                  placeholder="25000"
+                  value={editLateRate === '0' || editLateRate === '' ? '' : editLateRate}
+                  onChange={(e) => setEditLateRate(e.target.value === '' ? '0' : e.target.value)}
+                  placeholder="0 (Contoh: 25000)"
                   className="w-full bg-zinc-950 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />
               </div>
