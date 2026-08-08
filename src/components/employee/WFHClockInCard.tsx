@@ -370,7 +370,7 @@ export const WFHClockInCard: React.FC = () => {
                 {lateDays === 0 ? '100% On-Time' : `${lateDays} Terlambat`}
               </span>
             </div>
-            <p className="text-[10px] text-zinc-400 mt-1 font-mono">Status Rekam Medis: Aktif</p>
+            <p className="text-[10px] text-zinc-400 mt-1 font-mono">Status Presensi: Aktif Terverifikasi</p>
           </div>
         </div>
 
@@ -634,7 +634,7 @@ export const WFHClockInCard: React.FC = () => {
                   className={`w-full py-3.5 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 border ${
                     isClockOutDisabled
                       ? 'bg-zinc-900 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-60'
-                      : 'bg-sky-500 hover:bg-sky-400 text-zinc-950 shadow-xl shadow-sky-500/20 cursor-pointer border-sky-400/40'
+                      : 'bg-[#0ea5e9] hover:bg-[#38bdf8] text-zinc-950 shadow-xl shadow-sky-500/20 cursor-pointer border-sky-400/40'
                   }`}
                 >
                   {isSubmitting ? (
