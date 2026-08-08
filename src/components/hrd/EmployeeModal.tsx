@@ -9,6 +9,8 @@ interface EmployeeModalProps {
   onClose: () => void;
   onSave: (employeeData: Omit<Employee, 'id'>) => void;
   initialData?: Employee | null;
+  employee?: Employee | null;
+  departments?: string[];
 }
 
 // Helper to auto-format Indonesian phone numbers into 08XX-XXXX-XXXX with fixed 08 prefix
@@ -27,6 +29,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   onClose,
   onSave,
   initialData,
+  employee,
 }) => {
   const { departments: masterDepartments, positions: masterPositions, employees } = useApp();
 
@@ -54,6 +57,9 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       'Financial Analyst',
     ])
   );
+
+  const targetData = initialData || employee;
+
   const [nip, setNip] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -80,18 +86,18 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   };
 
   useEffect(() => {
-    if (initialData) {
-      setNip(initialData.nip);
-      setFullName(initialData.fullName);
-      setEmail(initialData.email);
-      setPhone(formatIndonesianPhone(initialData.phone));
-      setDepartment(initialData.department || '');
-      setPosition(initialData.position);
-      setRole(initialData.role || 'KARYAWAN');
-      setStatus(initialData.status === 'NON_AKTIF' || initialData.status === 'INACTIVE' ? 'NON_AKTIF' : 'AKTIF');
-      setJoinDate(initialData.joinDate);
-      setAvatarUrl(initialData.avatarUrl);
-      setWfhAllowance(initialData.wfhAllowanceDaysPerWeek ?? 0);
+    if (targetData) {
+      setNip(targetData.nip);
+      setFullName(targetData.fullName);
+      setEmail(targetData.email);
+      setPhone(formatIndonesianPhone(targetData.phone));
+      setDepartment(targetData.department || '');
+      setPosition(targetData.position);
+      setRole(targetData.role || 'KARYAWAN');
+      setStatus(targetData.status === 'NON_AKTIF' || targetData.status === 'INACTIVE' ? 'NON_AKTIF' : 'AKTIF');
+      setJoinDate(targetData.joinDate || targetData.joinedDate || new Date().toISOString().split('T')[0]);
+      setAvatarUrl(targetData.avatarUrl);
+      setWfhAllowance(targetData.wfhAllowanceDaysPerWeek ?? 0);
     } else {
       // Clean sequential NIP generation logic (e.g. EMP-2026-003)
       const nextSeq = String(employees.length + 1).padStart(3, '0');
@@ -107,7 +113,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
       setWfhAllowance(0); // Default to 0 days (WFO / Need Manager approval to grant WFH days)
     }
-  }, [initialData, isOpen, employees.length]);
+  }, [targetData, isOpen, employees.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,8 +137,8 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Update Data Karyawan' : 'Tambah Karyawan Baru (Master Data)'}
-      subtitle={initialData ? `Nomor NIP: ${initialData.nip}` : 'Isi formulir lengkap data master karyawan'}
+      title={targetData ? 'Update Data Karyawan' : 'Tambah Karyawan Baru (Master Data)'}
+      subtitle={targetData ? `Nomor NIP: ${targetData.nip}` : 'Isi formulir lengkap data master karyawan'}
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
@@ -268,7 +274,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           {/* Status Kepegawaian */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Status Kepegawaian *</label>
-            {initialData ? (
+            {targetData ? (
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
@@ -374,7 +380,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             type="submit"
             className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg hover:shadow-indigo-500/20 cursor-pointer"
           >
-            {initialData ? 'Simpan Perubahan' : 'Tambah Karyawan'}
+            {targetData ? 'Simpan Perubahan' : 'Tambah Karyawan'}
           </button>
         </div>
       </form>

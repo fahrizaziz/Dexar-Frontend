@@ -507,6 +507,7 @@ export const EmployeeMasterData: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveEmployee}
+        initialData={editingEmployee}
         employee={editingEmployee}
         departments={availableDepartments}
       />
