@@ -53,7 +53,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [status, setStatus] = useState<'AKTIF' | 'NON_AKTIF'>('AKTIF');
   const [joinDate, setJoinDate] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [wfhAllowance, setWfhAllowance] = useState<number>(3);
+  const [wfhAllowance, setWfhAllowance] = useState<number>(0);
   const [showUrlInput, setShowUrlInput] = useState(false);
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +81,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setStatus(initialData.status === 'NON_AKTIF' || initialData.status === 'INACTIVE' ? 'NON_AKTIF' : 'AKTIF');
       setJoinDate(initialData.joinDate);
       setAvatarUrl(initialData.avatarUrl);
-      setWfhAllowance(initialData.wfhAllowanceDaysPerWeek || 3);
+      setWfhAllowance(initialData.wfhAllowanceDaysPerWeek ?? 0);
     } else {
       // Clean sequential NIP generation logic (e.g. EMP-2026-003)
       const nextSeq = String(employees.length + 1).padStart(3, '0');
@@ -95,7 +95,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setStatus('AKTIF'); // Default to AKTIF for new onboarding
       setJoinDate(new Date().toISOString().split('T')[0]);
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
-      setWfhAllowance(3);
+      setWfhAllowance(0); // Default to 0 days (WFO / Need Manager approval to grant WFH days)
     }
   }, [initialData, isOpen, employees.length]);
 
@@ -291,12 +291,16 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             <label className="block text-xs font-semibold text-slate-300 mb-1">Jatah WFH (Hari / Minggu)</label>
             <input
               type="number"
-              min={1}
+              min={0}
               max={5}
               value={wfhAllowance}
               onChange={(e) => setWfhAllowance(Number(e.target.value))}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none"
+              placeholder="0 (WFO / Wajib Kantor)"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Set 0 untuk WFO (Wajib Kantor). Isi 1 - 5 jika karyawan diberikan jatah WFH mingguan.
+            </p>
           </div>
 
           {/* Foto Profil / Avatar File Upload */}
