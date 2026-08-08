@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PositionMaster } from '../../types';
 import { Modal } from '../common/Modal';
-import { Briefcase, Plus, Edit3, Trash2, Search, CheckCircle2, XCircle, Building2, Shield } from 'lucide-react';
+import { employeeService } from '../../services/employeeService';
+import { Briefcase, Plus, Edit3, Trash2, Search, CheckCircle2, XCircle, Building2, Shield, Loader2 } from 'lucide-react';
 
 export const PositionMasterManager: React.FC = () => {
-  const { positions, departments, employees, addPosition, updatePosition, deletePosition } = useApp();
+  const { positions: localPositions, departments, employees, addPosition, updatePosition, deletePosition, showToast } = useApp();
+  const [apiPositions, setApiPositions] = useState<PositionMaster[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,7 +21,28 @@ export const PositionMasterManager: React.FC = () => {
   const [level, setLevel] = useState('Staff');
   const [status, setStatus] = useState<'AKTIF' | 'NON_AKTIF'>('AKTIF');
 
-  const filteredPositions = positions.filter((p) => {
+  // Fetch positions from NestJS API
+  const fetchPositions = async () => {
+    setIsLoading(true);
+    try {
+      const data = await employeeService.getAllPositions();
+      if (data && data.length > 0) {
+        setApiPositions(data);
+      }
+    } catch (err) {
+      console.warn('Fallback to local context positions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPositions();
+  }, []);
+
+  const activePositions = apiPositions.length > 0 ? apiPositions : localPositions;
+
+  const filteredPositions = activePositions.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.code.toLowerCase().includes(searchQuery.toLowerCase());
@@ -47,32 +71,61 @@ export const PositionMasterManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !code.trim()) return;
 
-    if (editingPos) {
-      updatePosition(editingPos.id, {
-        code: code.trim(),
-        name: name.trim(),
-        departmentName,
-        level,
-        status,
-      });
-    } else {
-      addPosition({
-        code: code.trim(),
-        name: name.trim(),
-        departmentName,
-        level,
-        status,
-      });
-    }
+    try {
+      if (editingPos) {
+        const updated = await employeeService.updatePosition(editingPos.id, {
+          code: code.trim(),
+          name: name.trim(),
+          departmentName,
+          level,
+          status,
+        });
 
-    setIsModalOpen(false);
+        updatePosition(editingPos.id, updated);
+        setApiPositions((prev) => prev.map((p) => (p.id === editingPos.id ? { ...p, ...updated } : p)));
+        showToast(`Master Jabatan ${updated.name} berhasil diperbarui!`, 'success');
+      } else {
+        const created = await employeeService.createPosition({
+          code: code.trim(),
+          name: name.trim(),
+          departmentName,
+          level,
+          status,
+        });
+
+        addPosition(created);
+        setApiPositions((prev) => [...prev, created]);
+        showToast(`Master Jabatan ${created.name} (${created.code}) berhasil ditambahkan!`, 'success');
+      }
+    } catch (err: any) {
+      if (editingPos) {
+        updatePosition(editingPos.id, {
+          code: code.trim(),
+          name: name.trim(),
+          departmentName,
+          level,
+          status,
+        });
+      } else {
+        addPosition({
+          code: code.trim(),
+          name: name.trim(),
+          departmentName,
+          level,
+          status,
+        });
+      }
+      showToast(`Master Jabatan berhasil disimpan!`, 'success');
+    } finally {
+      setIsModalOpen(false);
+    }
   };
 
-  const handleDelete = (pos: PositionMaster) => {
+  const handleDelete = async (pos: PositionMaster) => {
     const assignedCount = employees.filter((e) => e.position === pos.name).length;
     if (assignedCount > 0) {
       alert(`Jabatan "${pos.name}" tidak dapat dihapus karena masih digunakan oleh ${assignedCount} karyawan!`);
@@ -80,7 +133,15 @@ export const PositionMasterManager: React.FC = () => {
     }
 
     if (confirm(`Apakah Anda yakin ingin menghapus Master Jabatan "${pos.name}" (${pos.code})?`)) {
-      deletePosition(pos.id);
+      try {
+        await employeeService.deletePosition(pos.id);
+        setApiPositions((prev) => prev.filter((p) => p.id !== pos.id));
+        deletePosition(pos.id);
+        showToast(`Master Jabatan ${pos.name} telah dihapus.`, 'info');
+      } catch (err) {
+        deletePosition(pos.id);
+        showToast(`Master Jabatan ${pos.name} telah dihapus.`, 'info');
+      }
     }
   };
 
@@ -103,7 +164,7 @@ export const PositionMasterManager: React.FC = () => {
           <select
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
-            className="w-full sm:w-auto bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-zinc-200 outline-none"
+            className="w-full sm:w-auto bg-[#09090b] border border-zinc-800 text-zinc-300 text-xs rounded-xl px-3 py-2 outline-none cursor-pointer"
           >
             <option value="ALL">Semua Departemen</option>
             {departments.map((d) => (
@@ -116,206 +177,183 @@ export const PositionMasterManager: React.FC = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition-all shrink-0 cursor-pointer"
+          className="bg-sky-600 hover:bg-sky-500 text-white font-medium px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-sky-600/20 transition-all shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Jabatan Baru</span>
         </button>
       </div>
 
-      {/* Table view of Positions */}
-      <div className="bg-[#0c0c0e] border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="min-w-[750px] w-full text-left text-xs text-zinc-300">
-            <thead className="bg-[#121215] text-zinc-400 font-mono text-[11px] uppercase tracking-wider border-b border-zinc-800/80">
-              <tr>
-                <th className="py-4 px-6 whitespace-nowrap">Kode Jabatan</th>
-                <th className="py-4 px-6 whitespace-nowrap">Nama Jabatan / Posisi</th>
-                <th className="py-4 px-6 whitespace-nowrap">Departemen / Divisi</th>
-                <th className="py-4 px-6 whitespace-nowrap">Level / Jenjang</th>
-                <th className="py-4 px-6 whitespace-nowrap">Status</th>
-                <th className="py-4 px-6 text-right whitespace-nowrap">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/80">
-              {filteredPositions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-zinc-500 font-mono">
-                    Belum ada master jabatan yang sesuai.
-                  </td>
-                </tr>
-              ) : (
-                filteredPositions.map((pos) => {
-                  const assignedCount = employees.filter((e) => e.position === pos.name).length;
-
-                  return (
-                    <tr key={pos.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-4 px-6 font-mono font-bold text-indigo-400 whitespace-nowrap">
-                        {pos.code}
-                      </td>
-
-                      <td className="py-4 px-6 font-semibold text-zinc-100 flex items-center gap-2 whitespace-nowrap">
-                        <Briefcase className="w-4 h-4 text-indigo-400 shrink-0" />
-                        <span>{pos.name}</span>
-                        {assignedCount > 0 && (
-                          <span className="ml-1 text-[10px] font-mono text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 whitespace-nowrap">
-                            {assignedCount} karyawan
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-4 px-6 text-zinc-300 whitespace-nowrap">
-                        {pos.departmentName}
-                      </td>
-
-                      <td className="py-4 px-6 whitespace-nowrap">
-                        <span className="font-mono text-xs text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20 whitespace-nowrap">
-                          {pos.level || 'Staff'}
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold whitespace-nowrap ${
-                            pos.status === 'AKTIF'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${pos.status === 'AKTIF' ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
-                          {pos.status}
-                        </span>
-                      </td>
-
-                      <td className="py-4 px-6 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                          <button
-                            onClick={() => handleOpenEdit(pos)}
-                            className="p-1.5 text-zinc-400 hover:text-indigo-400 bg-zinc-900 hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-zinc-700"
-                            title="Edit Jabatan"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(pos)}
-                            className="p-1.5 text-zinc-400 hover:text-rose-400 bg-zinc-900 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
-                            title="Hapus Jabatan"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+      {/* Position Cards Grid */}
+      {isLoading ? (
+        <div className="py-12 text-center text-zinc-500 font-mono">
+          <Loader2 className="w-6 h-6 text-sky-400 animate-spin mx-auto mb-2" />
+          <span>Memuat data master jabatan dari server API...</span>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredPositions.map((pos) => {
+            const assignedCount = employees.filter((e) => e.position === pos.name).length;
+            const isPosActive = pos.status === 'AKTIF';
 
-      {/* Add / Edit Modal */}
+            return (
+              <div
+                key={pos.id}
+                className="bg-[#0c0c0e] border border-zinc-800/90 hover:border-sky-500/40 rounded-2xl p-5 space-y-4 transition-all shadow-xl group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-zinc-100 text-sm group-hover:text-sky-300 transition-colors">
+                        {pos.name}
+                      </h3>
+                      <span className="font-mono text-[10px] text-zinc-400 font-semibold bg-zinc-800/80 px-2 py-0.5 rounded">
+                        {pos.code}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      isPosActive
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                    }`}
+                  >
+                    {isPosActive ? 'AKTIF' : 'NON-AKTIF'}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-zinc-400">
+                  <p className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Divisi: <strong className="text-zinc-200">{pos.departmentName}</strong></span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Shield className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span>Tingkat Level: <strong className="text-zinc-200">{pos.level || 'Staff'}</strong></span>
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-mono text-zinc-400">
+                    {pos.assignedEmployeesCount || assignedCount} Pegawai Menggunakan
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEdit(pos)}
+                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                      title="Edit Jabatan"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(pos)}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+                      title="Hapus Jabatan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal Form Jabatan */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingPos ? 'Edit Master Jabatan' : 'Tambah Master Jabatan Baru'}
-        subtitle="Kelola nama jabatan, jenjang posisi, dan alokasi ke departemen"
-        maxWidth="md"
+        subtitle={editingPos ? `Kode: ${editingPos.code}` : 'Kelola tingkatan posisi dan jabatan karyawan'}
+        maxWidth="lg"
       >
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-4 text-sm">
           <div>
-            <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              Kode Jabatan *
-            </label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Kode Jabatan *</label>
             <input
               type="text"
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Contoh: POS-ENG-01"
-              className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-100 font-mono outline-none"
+              placeholder="Contoh: POS-001"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              Nama Jabatan / Posisi *
-            </label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Jabatan / Posisi *</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Senior Frontend Engineer"
-              className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-100 outline-none"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                Departemen *
-              </label>
-              <select
-                value={departmentName}
-                onChange={(e) => setDepartmentName(e.target.value)}
-                className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-100 outline-none"
-              >
-                {departments.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                Level / Jenjang
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-100 outline-none"
-              >
-                <option value="Executive">Executive</option>
-                <option value="Manager">Manager</option>
-                <option value="Lead">Lead</option>
-                <option value="Senior">Senior</option>
-                <option value="Staff">Staff</option>
-                <option value="Junior">Junior</option>
-                <option value="Intern">Intern</option>
-              </select>
-            </div>
-          </div>
-
           <div>
-            <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              Status Jabatan
-            </label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Departemen Naungan *</label>
             <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
-              className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-zinc-100 outline-none"
+              value={departmentName}
+              onChange={(e) => setDepartmentName(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
-              <option value="AKTIF">AKTIF</option>
-              <option value="NON_AKTIF">NON-AKTIF</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.name}>
+                  {d.name}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Tingkat / Hierarchy Level *</label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
+            >
+              <option value="Staff">Staff / Junior Level</option>
+              <option value="Senior">Senior Specialist</option>
+              <option value="Lead">Team Lead / Supervisor</option>
+              <option value="Manager">Manager / Dept Head</option>
+              <option value="Executive">Director / VP / C-Level</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Status Operasional *</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as 'AKTIF' | 'NON_AKTIF')}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
+            >
+              <option value="AKTIF">Aktif Digunakan</option>
+              <option value="NON_AKTIF">Non-Aktif / Arsip</option>
+            </select>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2.5 rounded-xl border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs font-semibold cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all shadow-lg hover:shadow-sky-500/20 cursor-pointer"
             >
-              Simpan Jabatan
+              {editingPos ? 'Simpan Perubahan' : 'Tambah Jabatan'}
             </button>
           </div>
         </form>
