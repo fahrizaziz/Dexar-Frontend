@@ -71,7 +71,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [joinDate, setJoinDate] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [wfhAllowance, setWfhAllowance] = useState<number>(0);
-  const [salary, setSalary] = useState<number>(12000000);
+  const [salary, setSalary] = useState<number | ''>('');
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,7 +99,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setJoinDate(targetData.joinDate || targetData.joinedDate || new Date().toISOString().split('T')[0]);
       setAvatarUrl(targetData.avatarUrl);
       setWfhAllowance(targetData.wfhAllowanceDaysPerWeek ?? 0);
-      setSalary(targetData.salary || 12000000);
+      setSalary(targetData.salary ?? 12000000);
     } else {
       // Clean sequential NIP generation logic (e.g. EMP-2026-003)
       const nextSeq = String(employees.length + 1).padStart(3, '0');
@@ -114,7 +114,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setJoinDate(new Date().toISOString().split('T')[0]);
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
       setWfhAllowance(0); // Default to 0 days (WFO / Need Manager approval to grant WFH days)
-      setSalary(12000000); // Standard base salary default
+      setSalary(''); // Empty default for clean manual input
     }
   }, [targetData, isOpen, employees.length]);
 
@@ -132,7 +132,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       joinDate,
       avatarUrl: avatarUrl || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`,
       wfhAllowanceDaysPerWeek: Number(wfhAllowance),
-      salary: Number(salary),
+      salary: salary ? Number(salary) : 12000000,
     });
     onClose();
   };
@@ -281,12 +281,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
                 min={1000000}
                 step={500000}
                 value={salary}
-                onChange={(e) => setSalary(Number(e.target.value))}
-                placeholder="12000000"
+                onChange={(e) => setSalary(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Contoh: 12000000 (Ketik nominal)"
                 className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 outline-none font-mono text-xs"
               />
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Nominal acuan gaji pokok per bulan untuk kalkulasi slip penggajian.</p>
+            <p className="text-[10px] text-slate-500 mt-1">Ketikkan nominal gaji pokok per bulan (misal: 10000000 atau 15000000).</p>
           </div>
 
           {/* Role Hak Akses */}
