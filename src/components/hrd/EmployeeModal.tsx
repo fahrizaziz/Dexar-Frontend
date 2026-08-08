@@ -274,16 +274,20 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             )}
           </div>
 
-          {/* Join Date */}
+          {/* Join Date with Calendar Icon & Clickable Picker */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Tanggal Bergabung *</label>
-            <input
-              type="date"
-              required
-              value={joinDate}
-              onChange={(e) => setJoinDate(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none"
-            />
+            <div className="relative">
+              <Calendar className="w-4 h-4 text-indigo-400 absolute left-3.5 top-3.5 pointer-events-none" />
+              <input
+                type="date"
+                required
+                value={joinDate}
+                onClick={(e) => e.currentTarget.showPicker?.()}
+                onChange={(e) => setJoinDate(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 outline-none cursor-pointer text-xs font-mono [color-scheme:dark]"
+              />
+            </div>
           </div>
 
           {/* WFH Allowance */}
