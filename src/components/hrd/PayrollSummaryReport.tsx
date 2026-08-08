@@ -15,6 +15,9 @@ import {
   Users,
   Loader2,
   FileText,
+  Sliders,
+  Settings,
+  Save,
 } from 'lucide-react';
 import { exportToCSV } from '../../utils/exportUtils';
 import { Modal } from '../common/Modal';
@@ -40,15 +43,54 @@ interface EmployeePayrollMetrics {
 }
 
 export const PayrollSummaryReport: React.FC = () => {
-  const { employees, attendanceRecords, leaveRequests, geofenceConfig } = useApp();
+  const { employees, attendanceRecords, leaveRequests, geofenceConfig, updateGeofenceConfig, showToast, addAuditLog } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [apiPayroll, setApiPayroll] = useState<PayrollItem[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
   const [selectedSlipEmp, setSelectedSlipEmp] = useState<EmployeePayrollMetrics | null>(null);
 
+  // State for Rate Configuration Modal
+  const [isRatesModalOpen, setIsRatesModalOpen] = useState(false);
+  const [editWfhRate, setEditWfhRate] = useState<string>((geofenceConfig.wfhIncentivePerDay || 50000).toString());
+  const [editLateRate, setEditLateRate] = useState<string>((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
+
   const wfhRate = geofenceConfig.wfhIncentivePerDay || 50000;
   const lateRate = geofenceConfig.lateDeductionPerOccurrence || 25000;
+
+  useEffect(() => {
+    setEditWfhRate((geofenceConfig.wfhIncentivePerDay || 50000).toString());
+    setEditLateRate((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
+  }, [geofenceConfig]);
+
+  const handleSaveRates = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsedWfh = Number(editWfhRate);
+    const parsedLate = Number(editLateRate);
+
+    if (isNaN(parsedWfh) || isNaN(parsedLate)) {
+      showToast('Harap masukkan nominal tarif yang valid!', 'error');
+      return;
+    }
+
+    const updatedConfig = {
+      ...geofenceConfig,
+      wfhIncentivePerDay: parsedWfh,
+      lateDeductionPerOccurrence: parsedLate,
+    };
+
+    updateGeofenceConfig(updatedConfig);
+    showToast('Tarif insentif WFH & denda absensi berhasil diperbarui!', 'success');
+    addAuditLog({
+      actorNip: 'EMP-2026-002',
+      actorName: 'HRD Admin',
+      actorRole: 'HRD_ADMIN',
+      action: 'UPDATE_PAYROLL_RATES',
+      category: 'SYSTEM',
+      details: `Memperbarui tarif payroll: Insentif WFH = Rp ${parsedWfh.toLocaleString('id-ID')}/hari, Denda Keterlambatan = Rp ${parsedLate.toLocaleString('id-ID')}/kejadian.`,
+    });
+    setIsRatesModalOpen(false);
+  };
 
   // Fetch Payroll summary from NestJS API
   useEffect(() => {
@@ -183,6 +225,12 @@ export const PayrollSummaryReport: React.FC = () => {
                 <DollarSign className="w-3 h-3" />
                 Fitur #5: Integrasi API Payroll & Insentif WFH
               </span>
+              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                Tarif WFH: Rp {wfhRate.toLocaleString('id-ID')}/hari
+              </span>
+              <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded">
+                Denda Terlambat: Rp {lateRate.toLocaleString('id-ID')}/x
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 tracking-tight flex items-center gap-3">
@@ -196,6 +244,14 @@ export const PayrollSummaryReport: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap md:flex-col items-start md:items-end gap-3 shrink-0">
+            <button
+              onClick={() => setIsRatesModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+            >
+              <Sliders className="w-4 h-4 text-purple-400" />
+              <span>Pengaturan Tarif Payroll</span>
+            </button>
+
             <button
               onClick={handleExportPayroll}
               className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/20 transition-all cursor-pointer"
@@ -359,6 +415,72 @@ export const PayrollSummaryReport: React.FC = () => {
         </div>
       </div>
 
+      {/* Modal Pengaturan Tarif Payroll */}
+      {isRatesModalOpen && (
+        <Modal
+          isOpen={isRatesModalOpen}
+          onClose={() => setIsRatesModalOpen(false)}
+          title="Pengaturan Tarif Insentif & Denda Payroll"
+          subtitle="Konfigurasi parameter insentif hari kerja WFH dan potongan denda keterlambatan"
+          maxWidth="md"
+        >
+          <form onSubmit={handleSaveRates} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-zinc-300 font-semibold mb-1">Tarif Insentif WFH (IDR / Hari Kerja) *</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-emerald-400">Rp</span>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  step={5000}
+                  value={editWfhRate}
+                  onChange={(e) => setEditWfhRate(e.target.value)}
+                  placeholder="50000"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
+                />
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1">Nominal insentif yang diberikan untuk setiap 1 hari presensi WFH yang sukses.</p>
+            </div>
+
+            <div>
+              <label className="block text-zinc-300 font-semibold mb-1">Denda Keterlambatan Absensi (IDR / Kejadian) *</label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-rose-400">Rp</span>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  step={5000}
+                  value={editLateRate}
+                  onChange={(e) => setEditLateRate(e.target.value)}
+                  placeholder="25000"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
+                />
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1">Nominal potongan gaji untuk setiap 1 kali kejadian terlambat absensi masuk.</p>
+            </div>
+
+            <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsRatesModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-purple-600/20 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Perubahan Tarif
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Modal Detail Slip Gaji */}
       {selectedSlipEmp && (
         <Modal
@@ -394,7 +516,7 @@ export const PayrollSummaryReport: React.FC = () => {
                   <span>Rp {selectedSlipEmp.baseSalary.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-emerald-400 font-bold">
-                  <span>Insentif Hari Kerja WFH</span>
+                  <span>Insentif Hari Kerja WFH ({selectedSlipEmp.totalPresentDays} Hari @ Rp {wfhRate.toLocaleString('id-ID')})</span>
                   <span>+ Rp {selectedSlipEmp.wfhIncentiveTotal.toLocaleString('id-ID')}</span>
                 </div>
               </div>
@@ -404,7 +526,7 @@ export const PayrollSummaryReport: React.FC = () => {
               <h4 className="font-bold text-zinc-200 uppercase tracking-wider text-[11px]">Potongan / Deductions</h4>
               <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-3 space-y-2 font-mono text-rose-400">
                 <div className="flex justify-between">
-                  <span>Denda Keterlambatan ({selectedSlipEmp.lateArrivalCount}x)</span>
+                  <span>Denda Keterlambatan ({selectedSlipEmp.lateArrivalCount}x @ Rp {lateRate.toLocaleString('id-ID')})</span>
                   <span>- Rp {selectedSlipEmp.lateDeductionTotal.toLocaleString('id-ID')}</span>
                 </div>
               </div>
