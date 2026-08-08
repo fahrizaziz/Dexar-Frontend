@@ -40,12 +40,15 @@ interface EmployeePayrollMetrics {
 }
 
 export const PayrollSummaryReport: React.FC = () => {
-  const { employees, attendanceRecords, leaveRequests } = useApp();
+  const { employees, attendanceRecords, leaveRequests, geofenceConfig } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [apiPayroll, setApiPayroll] = useState<PayrollItem[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
   const [selectedSlipEmp, setSelectedSlipEmp] = useState<EmployeePayrollMetrics | null>(null);
+
+  const wfhRate = geofenceConfig.wfhIncentivePerDay || 50000;
+  const lateRate = geofenceConfig.lateDeductionPerOccurrence || 25000;
 
   // Fetch Payroll summary from NestJS API
   useEffect(() => {
@@ -68,28 +71,34 @@ export const PayrollSummaryReport: React.FC = () => {
   // Compute metrics per employee (with API preference)
   const employeeMetrics: EmployeePayrollMetrics[] =
     apiPayroll.length > 0
-      ? apiPayroll.map((item) => ({
-          employeeId: item.employeeId,
-          nip: item.nip,
-          fullName: item.fullName,
-          department: item.department,
-          position: item.position,
-          totalPresentDays: item.totalHadir,
-          totalWorkHours: item.totalHoursWorked,
-          totalOvertimeHours: 6,
-          lateArrivalCount: item.totalTerlambat,
-          attendanceRatePercent: Math.min(100, Math.round((item.totalHadir / 22) * 100)),
-          wfhQuotaUsed: item.wfhDaysCompleted,
-          wfhAllowance: item.wfhAllowanceEligibleDays,
-          baseSalary: item.baseSalary,
-          wfhIncentiveTotal: item.wfhIncentiveTotal,
-          lateDeductionTotal: item.lateDeductionTotal,
-          netSalary: item.netSalary,
-          payrollStatus: 'DIBAYARKAN',
-        }))
+      ? apiPayroll.map((item) => {
+          const wfhIncentiveTotal = item.totalHadir * wfhRate;
+          const lateDeductionTotal = item.totalTerlambat * lateRate;
+          const netSalary = (item.baseSalary || 12000000) + wfhIncentiveTotal - lateDeductionTotal;
+
+          return {
+            employeeId: item.employeeId,
+            nip: item.nip,
+            fullName: item.fullName,
+            department: item.department,
+            position: item.position,
+            totalPresentDays: item.totalHadir,
+            totalWorkHours: item.totalHoursWorked,
+            totalOvertimeHours: 6,
+            lateArrivalCount: item.totalTerlambat,
+            attendanceRatePercent: Math.min(100, Math.round((item.totalHadir / 22) * 100)),
+            wfhQuotaUsed: item.wfhDaysCompleted,
+            wfhAllowance: item.wfhAllowanceEligibleDays,
+            baseSalary: item.baseSalary || 12000000,
+            wfhIncentiveTotal,
+            lateDeductionTotal,
+            netSalary,
+            payrollStatus: 'DIBAYARKAN',
+          };
+        })
       : employees.map((emp) => {
           const empRecords = attendanceRecords.filter((r) => r.employeeId === emp.id);
-          const totalPresentDays = empRecords.length || 20;
+          const totalPresentDays = empRecords.length || 0;
 
           let totalWorkHours = 0;
           let lateArrivalCount = 0;
@@ -98,11 +107,10 @@ export const PayrollSummaryReport: React.FC = () => {
             if (r.status === 'LATE') lateArrivalCount++;
             totalWorkHours += 8;
           });
-          if (empRecords.length === 0) totalWorkHours = 160;
 
-          const baseSalary = 12000000;
-          const wfhIncentiveTotal = totalPresentDays * 50000;
-          const lateDeductionTotal = lateArrivalCount * 25000;
+          const baseSalary = emp.salary || 12000000;
+          const wfhIncentiveTotal = totalPresentDays * wfhRate;
+          const lateDeductionTotal = lateArrivalCount * lateRate;
           const netSalary = baseSalary + wfhIncentiveTotal - lateDeductionTotal;
 
           const standardDaysInMonth = 22;

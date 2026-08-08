@@ -121,6 +121,8 @@ export interface GeofenceConfig {
   workStartTime: string; // e.g. "08:30"
   workEndTime: string; // e.g. "17:30"
   lateToleranceMinutes: number; // e.g. 15
+  wfhIncentivePerDay?: number; // e.g. 50000
+  lateDeductionPerOccurrence?: number; // e.g. 25000
 }
 
 export interface WorkShift {
