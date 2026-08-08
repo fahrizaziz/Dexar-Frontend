@@ -24,7 +24,17 @@ import {
   UserCheck,
   Plus,
   Loader2,
+  XCircle,
+  ExternalLink,
 } from 'lucide-react';
+
+interface FeedbackModalState {
+  isOpen: boolean;
+  type: 'success' | 'error';
+  title: string;
+  message: string;
+  data?: AttendanceRecord;
+}
 
 export const WFHClockInCard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -41,6 +51,14 @@ export const WFHClockInCard: React.FC = () => {
   // Form submission states
   const [photoProofUrl, setPhotoProofUrl] = useState<string | null>(null);
   const [location, setLocation] = useState<LocationData | null>(null);
+
+  // Feedback Modal State for Success / Error dialogs
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+  });
 
   const todayStr = getTodayDateString();
 
@@ -102,19 +120,17 @@ export const WFHClockInCard: React.FC = () => {
     }
   };
 
+  // Validation rules for Clock In button disable state
+  const isClockInDisabled = !photoProofUrl || !workPlan.trim() || isSubmitting;
+
+  // Validation rules for Clock Out button disable state
+  const isClockOutDisabled = !workSummary.trim() || isSubmitting;
+
   // Submit Clock In (Absen Masuk) with API integration
   const handleClockIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!photoProofUrl) {
-      showToast('Harap ambil foto bukti presensi webcam terlebih dahulu!', 'error');
-      return;
-    }
-
-    if (!workPlan.trim()) {
-      showToast('Harap isi rencana kerja (Work Plan) hari ini!', 'error');
-      return;
-    }
+    if (isClockInDisabled) return;
 
     setIsSubmitting(true);
     const activeLoc = location || {
@@ -128,30 +144,32 @@ export const WFHClockInCard: React.FC = () => {
         latitude: activeLoc.latitude,
         longitude: activeLoc.longitude,
         address: activeLoc.address,
-        photoProofUrl,
+        photoProofUrl: photoProofUrl!,
         workPlan: workPlan.trim(),
       });
 
       addAttendanceRecord(record);
-      showToast(`Berhasil Absen Masuk WFH pukul ${record.clockInTime || formatTimeWIB(new Date())} WIB`, 'success');
+
+      // Reset form fields after success
+      setPhotoProofUrl(null);
+      setWorkPlan('');
+
+      // Show Feedback Modal (Success)
+      setFeedbackModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Absen Masuk WFH Berhasil!',
+        message: `Presensi Anda pada tanggal ${formatIndonesianDate(record.date)} pukul ${record.clockInTime} WIB berhasil dicatat dengan foto bukti webcam terverifikasi.`,
+        data: record,
+      });
     } catch (err: any) {
-      // Local sync fallback
-      const nowStr = formatTimeWIB(new Date());
-      const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 15;
-      const fallbackRecord: Omit<AttendanceRecord, 'id'> = {
-        employeeId: currentUser.id,
-        employeeName: currentUser.name,
-        employeeNip: currentUser.nip,
-        department: currentUser.department,
-        date: todayStr,
-        clockInTime: nowStr,
-        photoProofUrl,
-        location: activeLoc,
-        workPlan: workPlan.trim(),
-        status: isLate ? 'LATE' : 'ON_TIME',
-      };
-      addAttendanceRecord(fallbackRecord);
-      showToast(`Berhasil Absen Masuk WFH pukul ${nowStr} WIB`, 'success');
+      // Show Feedback Modal (Error)
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mencatat Absen Masuk',
+        message: err.message || 'Terjadi kesalahan sistem saat terhubung dengan server backend NestJS.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -160,12 +178,7 @@ export const WFHClockInCard: React.FC = () => {
   // Submit Clock Out (Absen Pulang) with API integration
   const handleClockOut = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!todayRecord) return;
-
-    if (!workSummary.trim()) {
-      showToast('Harap isi rekap hasil kerja (Work Summary) sebelum absen pulang!', 'error');
-      return;
-    }
+    if (!todayRecord || isClockOutDisabled) return;
 
     setIsSubmitting(true);
     try {
@@ -173,15 +186,26 @@ export const WFHClockInCard: React.FC = () => {
         workSummary: workSummary.trim(),
       });
       updateAttendanceRecord(todayRecord.id, updated);
-      showToast(`Berhasil Absen Pulang WFH pukul ${updated.clockOutTime || formatTimeWIB(new Date())} WIB. Selamat beristirahat!`, 'success');
-    } catch (err: any) {
-      const nowStr = formatTimeWIB(new Date());
-      updateAttendanceRecord(todayRecord.id, {
-        clockOutTime: nowStr,
-        workSummary: workSummary.trim(),
-        status: 'WORK_COMPLETED',
+
+      // Reset form fields after success
+      setWorkSummary('');
+
+      // Show Feedback Modal (Success)
+      setFeedbackModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Absen Pulang WFH Berhasil!',
+        message: `Laporan ringkasan hasil kerja (Work Summary) telah terkirim pada pukul ${updated.clockOutTime || formatTimeWIB(new Date())} WIB. Selamat beristirahat!`,
+        data: updated,
       });
-      showToast(`Berhasil Absen Pulang WFH pukul ${nowStr} WIB. Selamat beristirahat!`, 'success');
+    } catch (err: any) {
+      // Show Feedback Modal (Error)
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Gagal Mencatat Absen Pulang',
+        message: err.message || 'Terjadi kesalahan saat menyimpan rekap hasil kerja harian.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -219,7 +243,7 @@ export const WFHClockInCard: React.FC = () => {
               <p className="text-sm text-zinc-400 mt-0.5">
                 {todayRecord
                   ? 'Anda sudah melakukan Absen Masuk WFH hari ini.'
-                  : 'Silakan ambil foto webcam dan isi rencana kerja untuk Absen Masuk.'}
+                  : 'Ambil foto webcam dan isi rencana kerja untuk mengaktifkan tombol Absen Masuk.'}
               </p>
             </div>
           </div>
@@ -360,7 +384,7 @@ export const WFHClockInCard: React.FC = () => {
             <div>
               <h2 className="text-lg font-extrabold text-zinc-100">Form Presensi WFH (Work From Home)</h2>
               <p className="text-xs text-zinc-400">
-                Lakukan foto capture lokasi rumah/remote dan isi jurnal rencana kerja harian
+                Ambil snapshot foto webcam dan tuliskan jurnal kerja harian Anda untuk mengaktifkan absen
               </p>
             </div>
           </div>
@@ -482,16 +506,34 @@ export const WFHClockInCard: React.FC = () => {
               />
             </div>
 
-            {/* Submit Button */}
+            {/* Helper notice if button is disabled */}
+            {isClockInDisabled && !isSubmitting && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs rounded-xl font-mono flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  {!photoProofUrl && !workPlan.trim()
+                    ? 'Lengkapi Foto Webcam & Rencana Kerja untuk mengaktifkan tombol Absen.'
+                    : !photoProofUrl
+                    ? 'Harap ambil foto webcam terlebih dahulu.'
+                    : 'Harap isi Rencana Kerja (Work Plan) terlebih dahulu.'}
+                </span>
+              </div>
+            )}
+
+            {/* Submit Button with Disabled State */}
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-extrabold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
+              disabled={isClockInDisabled}
+              className={`w-full py-3.5 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 border ${
+                isClockInDisabled
+                  ? 'bg-zinc-900 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-60'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-xl shadow-emerald-500/20 cursor-pointer border-emerald-400/40'
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Mengirim Absen Masuk...</span>
+                  <span>Mengunggah Foto ke Cloudinary & Mencatat Absen...</span>
                 </>
               ) : (
                 <>
@@ -533,10 +575,21 @@ export const WFHClockInCard: React.FC = () => {
                   />
                 </div>
 
+                {isClockOutDisabled && !isSubmitting && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs rounded-xl font-mono flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Tuliskan Rekap Hasil Kerja untuk mengaktifkan tombol Absen Pulang.</span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-zinc-950 font-extrabold text-sm shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer border border-sky-400/40"
+                  disabled={isClockOutDisabled}
+                  className={`w-full py-3.5 rounded-xl font-extrabold text-sm transition-all flex items-center justify-center gap-2 border ${
+                    isClockOutDisabled
+                      ? 'bg-zinc-900 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-60'
+                      : 'bg-sky-500 hover:bg-sky-400 text-zinc-950 shadow-xl shadow-sky-500/20 cursor-pointer border-sky-400/40'
+                  }`}
                 >
                   {isSubmitting ? (
                     <>
@@ -582,6 +635,95 @@ export const WFHClockInCard: React.FC = () => {
         isOpen={isLeaveModalOpen}
         onClose={() => setIsLeaveModalOpen(false)}
       />
+
+      {/* SUCCESS / ERROR FEEDBACK MODAL */}
+      <Modal
+        isOpen={feedbackModal.isOpen}
+        onClose={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
+        title={feedbackModal.title}
+        subtitle={
+          feedbackModal.type === 'success'
+            ? 'Hasil pencatatan presensi berhasil diproses oleh server NestJS & Cloudinary'
+            : 'Informasi kegagalan pencatatan presensi'
+        }
+        maxWidth="md"
+      >
+        <div className="space-y-5 py-2">
+          {feedbackModal.type === 'success' ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                <div className="p-3 bg-emerald-500/20 rounded-xl">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-emerald-300">Status: Berhasil Dicatat</h4>
+                  <p className="text-xs text-zinc-300 mt-0.5">{feedbackModal.message}</p>
+                </div>
+              </div>
+
+              {feedbackModal.data && (
+                <div className="bg-[#09090b] border border-zinc-800 rounded-xl p-4 space-y-3 text-xs">
+                  <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <span className="font-mono text-zinc-400">Foto Cloudinary CDN:</span>
+                    <a
+                      href={feedbackModal.data.photoProofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 font-mono font-bold flex items-center gap-1 hover:underline text-[11px]"
+                    >
+                      <span>Buka URL Foto</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <div className="h-40 rounded-xl overflow-hidden border border-zinc-800 relative bg-black">
+                    <img
+                      src={feedbackModal.data.photoProofUrl}
+                      alt="Foto Terverifikasi"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                    <div className="bg-[#0c0c0e] p-2 rounded border border-zinc-800">
+                      <span className="text-zinc-500 block">Jam Masuk:</span>
+                      <span className="text-emerald-400 font-bold">{feedbackModal.data.clockInTime} WIB</span>
+                    </div>
+                    <div className="bg-[#0c0c0e] p-2 rounded border border-zinc-800">
+                      <span className="text-zinc-500 block">Status Absen:</span>
+                      <span className="text-emerald-400 font-bold">{feedbackModal.data.status}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400">
+                <div className="p-3 bg-rose-500/20 rounded-xl">
+                  <XCircle className="w-7 h-7 text-rose-400" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-rose-300">Status: Gagal Diproses</h4>
+                  <p className="text-xs text-zinc-300 mt-0.5">{feedbackModal.message}</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-zinc-400 leading-relaxed font-mono bg-[#09090b] p-3 rounded-xl border border-zinc-800">
+                💡 Pastikan server API Gateway backend NestJS (port 4000) dan MySQL lokal XAMPP dalam keadaan berjalan.
+              </p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setFeedbackModal((prev) => ({ ...prev, isOpen: false }))}
+            className="w-full py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-bold text-xs transition-all cursor-pointer"
+          >
+            Tutup Dialog
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
