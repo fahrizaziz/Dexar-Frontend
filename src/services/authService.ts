@@ -8,11 +8,12 @@ export interface LoginResponseData {
 
 export const authService = {
   /**
-   * Memanggil API Login Backend (POST /api/v1/auth/login)
+   * Memanggil API Login Backend (POST /api/v1/auth/login) dengan NIP & Password
    */
-  async login(email: string, pass: string): Promise<LoginResponseData> {
+  async login(nip: string, pass: string): Promise<LoginResponseData> {
     const response: ApiResponse<LoginResponseData> = await apiClient.post('/auth/login', {
-      email,
+      nip: nip.trim(),
+      identifier: nip.trim(),
       password: pass,
     });
 
@@ -21,7 +22,7 @@ export const authService = {
       return response.data;
     }
 
-    throw new Error(response.message || 'Login gagal');
+    throw new Error(response.message || 'Login gagal. Periksa NIP dan password Anda.');
   },
 
   /**
