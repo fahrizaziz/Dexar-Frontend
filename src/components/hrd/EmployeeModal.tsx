@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Employee, Department, Role } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, CheckCircle2, KeyRound } from 'lucide-react';
+import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, CheckCircle2, KeyRound, DollarSign } from 'lucide-react';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -71,6 +71,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [joinDate, setJoinDate] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [wfhAllowance, setWfhAllowance] = useState<number>(0);
+  const [salary, setSalary] = useState<number>(12000000);
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,6 +99,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setJoinDate(targetData.joinDate || targetData.joinedDate || new Date().toISOString().split('T')[0]);
       setAvatarUrl(targetData.avatarUrl);
       setWfhAllowance(targetData.wfhAllowanceDaysPerWeek ?? 0);
+      setSalary(targetData.salary || 12000000);
     } else {
       // Clean sequential NIP generation logic (e.g. EMP-2026-003)
       const nextSeq = String(employees.length + 1).padStart(3, '0');
@@ -112,6 +114,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setJoinDate(new Date().toISOString().split('T')[0]);
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
       setWfhAllowance(0); // Default to 0 days (WFO / Need Manager approval to grant WFH days)
+      setSalary(12000000); // Standard base salary default
     }
   }, [targetData, isOpen, employees.length]);
 
@@ -129,6 +132,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       joinDate,
       avatarUrl: avatarUrl || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`,
       wfhAllowanceDaysPerWeek: Number(wfhAllowance),
+      salary: Number(salary),
     });
     onClose();
   };
@@ -264,6 +268,25 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Gaji Pokok (Base Salary) */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">Gaji Pokok / Base Salary (IDR) *</label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-emerald-400">Rp</span>
+              <input
+                type="number"
+                required
+                min={1000000}
+                step={500000}
+                value={salary}
+                onChange={(e) => setSalary(Number(e.target.value))}
+                placeholder="12000000"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-3 py-2.5 text-slate-100 outline-none font-mono text-xs"
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">Nominal acuan gaji pokok per bulan untuk kalkulasi slip penggajian.</p>
           </div>
 
           {/* Role Hak Akses */}
