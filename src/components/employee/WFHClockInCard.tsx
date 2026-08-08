@@ -62,15 +62,36 @@ export const WFHClockInCard: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
-  // Find today's attendance record for current user
+  // Find today's attendance record for current user (check by employeeId OR NIP)
   const todayRecord = attendanceRecords.find(
-    (r) => r.employeeId === currentUser.id && r.date === todayStr
+    (r) =>
+      (r.employeeId === currentUser.id || r.employeeNip === currentUser.nip) &&
+      r.date === todayStr
   );
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Fetch today's record from backend NestJS API on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function syncTodayRecord() {
+      try {
+        const records = await attendanceService.getMyHistory();
+        if (isMounted && Array.isArray(records) && records.length > 0) {
+          records.forEach((r) => addAttendanceRecord(r));
+        }
+      } catch (err) {
+        console.warn('Could not sync attendance history on mount:', err);
+      }
+    }
+    syncTodayRecord();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser.nip]);
 
   // Fetch real GPS location from browser HTML5 Geolocation API
   const handleGetLocation = () => {
@@ -148,7 +169,14 @@ export const WFHClockInCard: React.FC = () => {
         workPlan: workPlan.trim(),
       });
 
-      addAttendanceRecord(record);
+      // Ensure record has employeeNip for matching
+      const fullRecord: AttendanceRecord = {
+        ...record,
+        employeeNip: record.employeeNip || currentUser.nip,
+        employeeName: record.employeeName || currentUser.name,
+      };
+
+      addAttendanceRecord(fullRecord);
 
       // Reset form fields after success
       setPhotoProofUrl(null);
@@ -159,8 +187,8 @@ export const WFHClockInCard: React.FC = () => {
         isOpen: true,
         type: 'success',
         title: 'Absen Masuk WFH Berhasil!',
-        message: `Presensi Anda pada tanggal ${formatIndonesianDate(record.date)} pukul ${record.clockInTime} WIB berhasil dicatat dengan foto bukti webcam terverifikasi.`,
-        data: record,
+        message: `Presensi Anda pada tanggal ${formatIndonesianDate(fullRecord.date)} pukul ${fullRecord.clockInTime} WIB berhasil dicatat dengan foto bukti webcam terverifikasi Cloudinary.`,
+        data: fullRecord,
       });
     } catch (err: any) {
       // Show Feedback Modal (Error)
@@ -185,6 +213,7 @@ export const WFHClockInCard: React.FC = () => {
       const updated = await attendanceService.clockOut(todayRecord.id, {
         workSummary: workSummary.trim(),
       });
+
       updateAttendanceRecord(todayRecord.id, updated);
 
       // Reset form fields after success
@@ -212,7 +241,7 @@ export const WFHClockInCard: React.FC = () => {
   };
 
   // Personal Monthly Stats calculation for current employee
-  const myRecords = attendanceRecords.filter((r) => r.employeeId === currentUser.id);
+  const myRecords = attendanceRecords.filter((r) => r.employeeId === currentUser.id || r.employeeNip === currentUser.nip);
   const totalDaysPresent = myRecords.length || 18;
   const totalHoursWorked = totalDaysPresent * 8;
   const lateDays = myRecords.filter((r) => r.status === 'LATE').length;
@@ -384,7 +413,9 @@ export const WFHClockInCard: React.FC = () => {
             <div>
               <h2 className="text-lg font-extrabold text-zinc-100">Form Presensi WFH (Work From Home)</h2>
               <p className="text-xs text-zinc-400">
-                Ambil snapshot foto webcam dan tuliskan jurnal kerja harian Anda untuk mengaktifkan absen
+                {todayRecord
+                  ? 'Anda telah melakukan Absen Masuk. Isi rekap hasil kerja di bawah untuk Absen Pulang.'
+                  : 'Ambil snapshot foto webcam dan tuliskan jurnal kerja harian Anda untuk mengaktifkan absen'}
               </p>
             </div>
           </div>
@@ -548,11 +579,11 @@ export const WFHClockInCard: React.FC = () => {
           <div className="space-y-6">
             <div className="bg-[#09090b] border border-zinc-800 rounded-2xl p-5 space-y-3">
               <div className="flex items-center justify-between text-xs font-mono border-b border-zinc-800/80 pb-3">
-                <span className="text-zinc-400">Jam Absen Masuk:</span>
+                <span className="text-zinc-400">Jam Absen Masuk Hari Ini:</span>
                 <span className="text-emerald-400 font-bold">{todayRecord.clockInTime} WIB</span>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-mono text-zinc-400">Rencana Kerja Hari Ini:</p>
+                <p className="text-xs font-mono text-zinc-400">Rencana Kerja Hari Ini (Work Plan):</p>
                 <p className="text-xs text-zinc-200 bg-[#0c0c0e] p-3 rounded-xl border border-zinc-800 leading-relaxed">
                   {todayRecord.workPlan}
                 </p>

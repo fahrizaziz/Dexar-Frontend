@@ -29,6 +29,8 @@ interface AppContextType {
   updatePosition: (id: string, fields: Partial<PositionMaster>) => void;
   deletePosition: (id: string) => void;
   submitAttendance: (record: Omit<AttendanceRecord, 'id' | 'createdAt'>) => AttendanceRecord;
+  addAttendanceRecord: (record: AttendanceRecord) => void;
+  updateAttendanceRecord: (id: string, fields: Partial<AttendanceRecord>) => void;
   updateAttendanceStatus: (id: string, fields: Partial<AttendanceRecord>) => void;
   submitLeaveRequest: (req: Omit<LeaveRequest, 'id' | 'createdAt'>) => LeaveRequest;
   updateLeaveStatus: (id: string, fields: Partial<LeaveRequest>) => void;
@@ -161,6 +163,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return created;
   };
 
+  const addAttendanceRecord = (record: AttendanceRecord) => {
+    setAttendanceRecords((prev) => {
+      const exists = prev.some((r) => r.id === record.id || (r.employeeNip === record.employeeNip && r.date === record.date));
+      if (exists) {
+        return prev.map((r) => (r.id === record.id || (r.employeeNip === record.employeeNip && r.date === record.date) ? { ...r, ...record } : r));
+      }
+      return [record, ...prev];
+    });
+  };
+
+  const updateAttendanceRecord = (id: string, fields: Partial<AttendanceRecord>) => {
+    setAttendanceRecords((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...fields } : r))
+    );
+  };
+
   const updateAttendanceStatus = (id: string, fields: Partial<AttendanceRecord>) => {
     const updated = storageService.updateAttendanceRecord(id, fields);
     if (updated) {
@@ -236,6 +254,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updatePosition,
         deletePosition,
         submitAttendance,
+        addAttendanceRecord,
+        updateAttendanceRecord,
         updateAttendanceStatus,
         submitLeaveRequest,
         updateLeaveStatus,
