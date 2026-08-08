@@ -17,7 +17,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   onSave,
   initialData,
 }) => {
-  const { departments: masterDepartments, positions: masterPositions } = useApp();
+  const { departments: masterDepartments, positions: masterPositions, employees } = useApp();
 
   const activeMasterDeptNames = Array.from(
     new Set([
@@ -83,9 +83,9 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setAvatarUrl(initialData.avatarUrl);
       setWfhAllowance(initialData.wfhAllowanceDaysPerWeek || 3);
     } else {
-      // Auto-generate realistic NIP for new employee
-      const randomNum = Math.floor(100 + Math.random() * 900);
-      setNip(`EMP-2026-${randomNum}`);
+      // Clean sequential NIP generation logic (e.g. EMP-2026-003)
+      const nextSeq = String(employees.length + 1).padStart(3, '0');
+      setNip(`EMP-2026-${nextSeq}`);
       setFullName('');
       setEmail('');
       setPhone('0812-');
@@ -97,12 +97,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setAvatarUrl(`https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=250`);
       setWfhAllowance(3);
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, employees.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      nip,
+      nip: nip.trim() || `EMP-2026-${String(employees.length + 1).padStart(3, '0')}`,
       fullName: fullName.trim(),
       email: email.trim(),
       phone: phone.trim(),
@@ -129,14 +129,21 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* NIP */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Nomor Induk Pegawai (NIP) *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">Nomor Induk Pegawai (NIP) *</label>
+              <span className="text-[10px] text-slate-500 font-mono">Format: EMP-2026-XXX</span>
+            </div>
             <input
               type="text"
               required
               value={nip}
               onChange={(e) => setNip(e.target.value)}
+              placeholder="Contoh: EMP-2026-003"
               className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Dapat diedit manual atau biarkan penomoran urut otomatis ({`EMP-2026-${String(employees.length + 1).padStart(3, '0')}`}).
+            </p>
           </div>
 
           {/* Full Name */}
@@ -344,13 +351,13 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg hover:shadow-indigo-500/20"
+            className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-all shadow-lg hover:shadow-indigo-500/20 cursor-pointer"
           >
             {initialData ? 'Simpan Perubahan' : 'Tambah Karyawan'}
           </button>
