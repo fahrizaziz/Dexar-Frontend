@@ -268,16 +268,16 @@ export const EmployeeMasterData: React.FC = () => {
 
           {/* Employees Table */}
           <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="min-w-[850px] w-full text-left text-xs">
                 <thead className="bg-[#09090b] text-zinc-400 font-mono uppercase tracking-wider border-b border-zinc-800">
                   <tr>
-                    <th className="px-6 py-4">Karyawan</th>
-                    <th className="px-6 py-4">Departemen & Jabatan</th>
-                    <th className="px-6 py-4">Kontak</th>
-                    <th className="px-6 py-4">Role System</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Aksi</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Karyawan</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Departemen & Jabatan</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Kontak</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Role System</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                    <th className="px-6 py-4 text-right whitespace-nowrap">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60 font-sans">
@@ -290,7 +290,7 @@ export const EmployeeMasterData: React.FC = () => {
                   ) : (
                     filteredEmployees.map((emp) => (
                       <tr key={emp.id} className="hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <img
                               src={emp.avatarUrl}
@@ -298,30 +298,30 @@ export const EmployeeMasterData: React.FC = () => {
                               className="w-10 h-10 rounded-xl object-cover ring-1 ring-zinc-700 shrink-0"
                             />
                             <div>
-                              <p className="font-bold text-zinc-100">{emp.fullName}</p>
-                              <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 inline-block mt-0.5">
+                              <p className="font-bold text-zinc-100 whitespace-nowrap">{emp.fullName}</p>
+                              <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 inline-block mt-0.5 whitespace-nowrap">
                                 NIP: {emp.nip}
                               </span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="font-semibold text-zinc-200">{emp.department}</p>
-                          <p className="text-zinc-400 text-[11px]">{emp.position}</p>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="font-semibold text-zinc-200 whitespace-nowrap">{emp.department}</p>
+                          <p className="text-zinc-400 text-[11px] whitespace-nowrap">{emp.position}</p>
                         </td>
-                        <td className="px-6 py-4 space-y-1 text-zinc-400">
-                          <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                            <Mail className="w-3.5 h-3.5 text-zinc-500" />
+                        <td className="px-6 py-4 space-y-1 text-zinc-400 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap">
+                            <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                             <span>{emp.email}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                            <Phone className="w-3.5 h-3.5 text-zinc-500" />
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap">
+                            <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                             <span>{emp.phone}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border ${
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border inline-block whitespace-nowrap ${
                               emp.role === 'HRD_ADMIN'
                                 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
                                 : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
@@ -330,24 +330,24 @@ export const EmployeeMasterData: React.FC = () => {
                             {emp.role === 'HRD_ADMIN' ? 'ADMIN HRD' : 'KARYAWAN WFH'}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold flex items-center gap-1.5 w-fit ${
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1.5 whitespace-nowrap ${
                               emp.status === 'AKTIF'
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                 : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                             }`}
                           >
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                 emp.status === 'AKTIF' ? 'bg-emerald-400' : 'bg-rose-400'
                               }`}
                             />
                             <span>{emp.status}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                             <button
                               onClick={() => handleOpenEditModal(emp)}
                               className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-indigo-400 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-zinc-700"
