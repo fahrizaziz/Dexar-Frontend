@@ -97,8 +97,13 @@ export const EmployeeMasterData: React.FC = () => {
       emp.nip.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const isEmpActive = emp.status === 'ACTIVE' || emp.status === 'AKTIF';
     const matchesDept = selectedDept === 'ALL' || emp.department === selectedDept;
-    const matchesStatus = selectedStatus === 'ALL' || emp.status === selectedStatus;
+    const matchesStatus =
+      selectedStatus === 'ALL' ||
+      (selectedStatus === 'ACTIVE' && isEmpActive) ||
+      (selectedStatus === 'INACTIVE' && !isEmpActive);
+
     const matchesRole = selectedRole === 'ALL' || emp.role === selectedRole;
 
     return matchesSearch && matchesDept && matchesStatus && matchesRole;
@@ -389,90 +394,93 @@ export const EmployeeMasterData: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedEmployees.map((emp) => (
-                      <tr key={emp.id} className="hover:bg-zinc-800/40 transition-colors">
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={emp.avatarUrl}
-                              alt={emp.fullName}
-                              className="w-10 h-10 rounded-xl object-cover ring-2 ring-indigo-500/20 shrink-0"
-                            />
-                            <div>
-                              <p className="font-bold text-zinc-100 text-sm whitespace-nowrap">{emp.fullName}</p>
-                              <p className="text-[11px] text-zinc-400 font-mono whitespace-nowrap">{emp.email}</p>
+                    paginatedEmployees.map((emp) => {
+                      const isActive = emp.status === 'ACTIVE' || emp.status === 'AKTIF';
+                      return (
+                        <tr key={emp.id} className="hover:bg-zinc-800/40 transition-colors">
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={emp.avatarUrl}
+                                alt={emp.fullName}
+                                className="w-10 h-10 rounded-xl object-cover ring-2 ring-indigo-500/20 shrink-0"
+                              />
+                              <div>
+                                <p className="font-bold text-zinc-100 text-sm whitespace-nowrap">{emp.fullName}</p>
+                                <p className="text-[11px] text-zinc-400 font-mono whitespace-nowrap">{emp.email}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <span className="font-mono text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 inline-block whitespace-nowrap">
-                              {emp.nip}
-                            </span>
-                            <p className="text-[10px] text-zinc-400 uppercase font-mono font-semibold whitespace-nowrap">
-                              {emp.role}
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <span className="font-mono text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 inline-block whitespace-nowrap">
+                                {emp.nip}
+                              </span>
+                              <p className="text-[10px] text-zinc-400 uppercase font-mono font-semibold whitespace-nowrap">
+                                {emp.role}
+                              </p>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div>
+                              <p className="font-semibold text-zinc-200 whitespace-nowrap">{emp.department}</p>
+                              <p className="text-[11px] text-zinc-400 whitespace-nowrap">{emp.position}</p>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-6 font-mono text-[11px] whitespace-nowrap">
+                            <p className="text-zinc-300 flex items-center gap-1.5 whitespace-nowrap">
+                              <Phone className="w-3 h-3 text-zinc-500 shrink-0" />
+                              <span>{emp.phone}</span>
                             </p>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <div>
-                            <p className="font-semibold text-zinc-200 whitespace-nowrap">{emp.department}</p>
-                            <p className="text-[11px] text-zinc-400 whitespace-nowrap">{emp.position}</p>
-                          </div>
-                        </td>
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <span className="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                              {emp.wfhAllowanceDaysPerWeek || 3} Hari / Minggu
+                            </span>
+                          </td>
 
-                        <td className="py-4 px-6 font-mono text-[11px] whitespace-nowrap">
-                          <p className="text-zinc-300 flex items-center gap-1.5 whitespace-nowrap">
-                            <Phone className="w-3 h-3 text-zinc-500 shrink-0" />
-                            <span>{emp.phone}</span>
-                          </p>
-                        </td>
-
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <span className="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
-                            {emp.wfhAllowanceDaysPerWeek || 3} Hari / Minggu
-                          </span>
-                        </td>
-
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1 whitespace-nowrap ${
-                              emp.status === 'ACTIVE'
-                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                            }`}
-                          >
+                          <td className="py-4 px-6 whitespace-nowrap">
                             <span
-                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                emp.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-rose-400'
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1 whitespace-nowrap ${
+                                isActive
+                                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
                               }`}
-                            />
-                            {emp.status === 'ACTIVE' ? 'AKTIF' : 'NON-AKTIF'}
-                          </span>
-                        </td>
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  isActive ? 'bg-emerald-400' : 'bg-rose-400'
+                                }`}
+                              />
+                              {isActive ? 'AKTIF' : 'NON-AKTIF'}
+                            </span>
+                          </td>
 
-                        <td className="py-4 px-6 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                            <button
-                              onClick={() => handleOpenEditModal(emp)}
-                              className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                              title="Edit Data Karyawan"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(emp)}
-                              className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
-                              title="Hapus Karyawan"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          <td className="py-4 px-6 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                              <button
+                                onClick={() => handleOpenEditModal(emp)}
+                                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                title="Edit Data Karyawan"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(emp)}
+                                className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+                                title="Hapus Karyawan"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
