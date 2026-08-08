@@ -159,17 +159,17 @@ export const EmployeeMasterData: React.FC = () => {
           )}
         </div>
 
-        {/* Master Navigation Bar */}
-        <div className="flex items-center gap-2 bg-[#0c0c0e] border border-zinc-800/90 p-1.5 rounded-2xl max-w-full overflow-x-auto no-scrollbar">
+        {/* Master Navigation Bar - Centered & Grid Balanced */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 bg-[#09090b] border border-zinc-800/90 p-1.5 rounded-2xl shadow-inner">
           <button
             onClick={() => setActiveMasterTab('EMPLOYEES')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'EMPLOYEES'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Users className="w-4 h-4 shrink-0" />
+            <Users className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>1. Master Karyawan</span>
             <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px] shrink-0">
               {employees.length}
@@ -178,13 +178,13 @@ export const EmployeeMasterData: React.FC = () => {
 
           <button
             onClick={() => setActiveMasterTab('DEPARTMENTS')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'DEPARTMENTS'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Building2 className="w-4 h-4 shrink-0" />
+            <Building2 className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>2. Master Departemen & Divisi</span>
             <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px] shrink-0">
               {departments.length}
@@ -193,13 +193,13 @@ export const EmployeeMasterData: React.FC = () => {
 
           <button
             onClick={() => setActiveMasterTab('POSITIONS')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'POSITIONS'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Briefcase className="w-4 h-4 shrink-0" />
+            <Briefcase className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>3. Master Jabatan / Posisi</span>
           </button>
         </div>
