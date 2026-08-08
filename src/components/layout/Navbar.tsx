@@ -63,6 +63,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   const canViewAuditLogs = hasPermission('VIEW_AUDIT_TRAILS');
   const canManageMenuAccess = hasPermission('MANAGE_MENU_ACCESS');
 
+  const hasEmployeeTabs = canClockIn || canViewHistory || canManageLeave;
+  const hasHrdTabs =
+    canViewMonitoring ||
+    canManageEmployees ||
+    canViewPayroll ||
+    canManageGeofence ||
+    canViewAuditLogs ||
+    canManageMenuAccess;
+
   const handleLogout = () => {
     logout();
     setIsProfileMenuOpen(false);
@@ -72,9 +81,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#0c0c0e]/95 backdrop-blur-md border-b border-zinc-800/90 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 gap-4">
           {/* Brand Logo & Name */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="w-11 h-11 rounded-xl bg-[#121215] flex items-center justify-center text-emerald-400 shadow-inner border border-zinc-800">
               <Building2 className="w-6 h-6" />
             </div>
@@ -84,19 +93,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   WFH Portal
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 hidden sm:block">
+              <p className="text-xs text-zinc-400 hidden xl:block">
                 Sistem Absensi & Monitoring Karyawan
               </p>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="hidden xl:flex items-center gap-1.5 bg-[#09090b] p-1.5 rounded-xl border border-zinc-800">
+          {/* Navigation Tabs (Desktop & Tablet) */}
+          <nav className="hidden md:flex items-center gap-1.5 bg-[#09090b] p-1.5 rounded-2xl border border-zinc-800/90 max-w-full overflow-x-auto no-scrollbar shadow-inner">
             {/* Employee Tabs */}
             {canClockIn && (
               <button
                 onClick={() => setActiveTab('ABSENSI_WFH')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'ABSENSI_WFH'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -110,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewHistory && (
               <button
                 onClick={() => setActiveTab('HISTORY_SAYA')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'HISTORY_SAYA'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -124,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageLeave && (
               <button
                 onClick={() => setActiveTab('PENGAJUAN_CUTI')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'PENGAJUAN_CUTI'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -135,21 +144,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Divider */}
-            {(canViewMonitoring ||
-              canManageEmployees ||
-              canViewPayroll ||
-              canManageGeofence ||
-              canViewAuditLogs ||
-              canManageMenuAccess) && <div className="h-4 w-px bg-zinc-800 mx-1" />}
+            {/* Divider only if both employee and HRD tabs are present */}
+            {hasEmployeeTabs && hasHrdTabs && <div className="h-4 w-px bg-zinc-800 mx-1 shrink-0" />}
 
             {/* HRD / Admin Tabs */}
             {canViewMonitoring && (
               <button
                 onClick={() => setActiveTab('MONITORING_HRD')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'MONITORING_HRD'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -161,9 +165,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageEmployees && (
               <button
                 onClick={() => setActiveTab('MASTER_KARYAWAN')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'MASTER_KARYAWAN'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -175,9 +179,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewPayroll && (
               <button
                 onClick={() => setActiveTab('REKAP_PAYROLL')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'REKAP_PAYROLL'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 font-bold border border-purple-400/40'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30 font-bold border border-purple-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -189,9 +193,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageGeofence && (
               <button
                 onClick={() => setActiveTab('GEOFENCE_SHIFT')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'GEOFENCE_SHIFT'
-                    ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/20 font-bold border border-cyan-400/40'
+                    ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30 font-bold border border-cyan-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -203,9 +207,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewAuditLogs && (
               <button
                 onClick={() => setActiveTab('AUDIT_LOGS')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'AUDIT_LOGS'
-                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 font-bold border border-amber-400/40'
+                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 font-bold border border-amber-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -217,9 +221,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageMenuAccess && (
               <button
                 onClick={() => setActiveTab('KONFIGURASI_AKSES')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'KONFIGURASI_AKSES'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
@@ -230,9 +234,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Controls: Real-time clock & User profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Live Clock */}
-            <div className="hidden lg:flex flex-col items-end text-right px-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800">
+            <div className="hidden xl:flex flex-col items-end text-right px-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800">
               <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400">
                 <Clock className="w-3.5 h-3.5 animate-pulse" />
                 <span>{formatTimeWIB(currentTime)}</span>
@@ -302,11 +306,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Navigation Row */}
-        <div className="flex md:hidden items-center justify-around py-2.5 border-t border-zinc-800 text-xs">
+        <div className="flex md:hidden items-center gap-2 py-2.5 border-t border-zinc-800 text-xs overflow-x-auto no-scrollbar">
           {canClockIn && (
             <button
               onClick={() => setActiveTab('ABSENSI_WFH')}
-              className={`flex flex-col items-center gap-1 ${
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
                 activeTab === 'ABSENSI_WFH' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
               }`}
             >
@@ -318,7 +322,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {canViewHistory && (
             <button
               onClick={() => setActiveTab('HISTORY_SAYA')}
-              className={`flex flex-col items-center gap-1 ${
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
                 activeTab === 'HISTORY_SAYA' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
               }`}
             >
@@ -327,10 +331,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {canManageLeave && (
+            <button
+              onClick={() => setActiveTab('PENGAJUAN_CUTI')}
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
+                activeTab === 'PENGAJUAN_CUTI' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
+              }`}
+            >
+              <CalendarDays className="w-5 h-5" />
+              <span>Cuti & WFH</span>
+            </button>
+          )}
+
           {canViewMonitoring && (
             <button
               onClick={() => setActiveTab('MONITORING_HRD')}
-              className={`flex flex-col items-center gap-1 ${
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
                 activeTab === 'MONITORING_HRD' ? 'text-indigo-400 font-bold' : 'text-zinc-400'
               }`}
             >
@@ -342,7 +358,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {canManageEmployees && (
             <button
               onClick={() => setActiveTab('MASTER_KARYAWAN')}
-              className={`flex flex-col items-center gap-1 ${
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
                 activeTab === 'MASTER_KARYAWAN' ? 'text-indigo-400 font-bold' : 'text-zinc-400'
               }`}
             >
@@ -351,15 +367,51 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {canViewPayroll && (
+            <button
+              onClick={() => setActiveTab('REKAP_PAYROLL')}
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
+                activeTab === 'REKAP_PAYROLL' ? 'text-purple-400 font-bold' : 'text-zinc-400'
+              }`}
+            >
+              <FileSpreadsheet className="w-5 h-5 text-purple-400" />
+              <span>Payroll</span>
+            </button>
+          )}
+
+          {canManageGeofence && (
+            <button
+              onClick={() => setActiveTab('GEOFENCE_SHIFT')}
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
+                activeTab === 'GEOFENCE_SHIFT' ? 'text-cyan-400 font-bold' : 'text-zinc-400'
+              }`}
+            >
+              <MapPin className="w-5 h-5 text-cyan-400" />
+              <span>Shift</span>
+            </button>
+          )}
+
+          {canViewAuditLogs && (
+            <button
+              onClick={() => setActiveTab('AUDIT_LOGS')}
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
+                activeTab === 'AUDIT_LOGS' ? 'text-amber-400 font-bold' : 'text-zinc-400'
+              }`}
+            >
+              <Activity className="w-5 h-5 text-amber-400" />
+              <span>Audit</span>
+            </button>
+          )}
+
           {canManageMenuAccess && (
             <button
               onClick={() => setActiveTab('KONFIGURASI_AKSES')}
-              className={`flex flex-col items-center gap-1 ${
+              className={`flex flex-col items-center gap-1 shrink-0 px-3 ${
                 activeTab === 'KONFIGURASI_AKSES' ? 'text-indigo-400 font-bold' : 'text-zinc-400'
               }`}
             >
               <Sliders className="w-5 h-5" />
-              <span>Akses Menu</span>
+              <span>Akses</span>
             </button>
           )}
         </div>

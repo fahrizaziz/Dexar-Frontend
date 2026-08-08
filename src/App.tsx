@@ -18,10 +18,10 @@ import { MfeAdminGovernance } from './mfe/remotes/MfeAdminGovernance';
 import { MfeInspectorModal } from './components/mfe/MfeInspectorModal';
 
 function MainAppContent() {
+  const { currentUser, isLoadingAuth } = useAuth();
   const [activeTab, setActiveTab] = useState<NavTabType>('ABSENSI_WFH');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMfeInspectorOpen, setIsMfeInspectorOpen] = useState(false);
-  const { isLoadingAuth } = useAuth();
 
   // Otomatis buka modal login jika user belum terautentikasi saat pertama kali web diakses
   useEffect(() => {
@@ -29,6 +29,15 @@ function MainAppContent() {
       setIsLoginModalOpen(true);
     }
   }, [isLoadingAuth]);
+
+  // Otomatis set default active tab berdasarkan role: HRD_ADMIN -> MONITORING_HRD, KARYAWAN -> ABSENSI_WFH
+  useEffect(() => {
+    if (currentUser?.role === 'HRD_ADMIN') {
+      setActiveTab('MONITORING_HRD');
+    } else {
+      setActiveTab('ABSENSI_WFH');
+    }
+  }, [currentUser?.role]);
 
   // Micro-Frontend Route Grouping
   const isEmployeeMfeRoute =

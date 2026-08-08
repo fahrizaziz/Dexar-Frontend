@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Employee, Department } from '../../types';
 import { EmployeeModal } from './EmployeeModal';
 import { DepartmentMasterManager } from './DepartmentMasterManager';
 import { PositionMasterManager } from './PositionMasterManager';
 import { BulkImportModal } from './BulkImportModal';
+import { Pagination } from '../common/Pagination';
 import {
   Users,
   UserPlus,
@@ -38,6 +39,15 @@ export const EmployeeMasterData: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedDept, selectedStatus, selectedRole]);
+
   // Dynamic department list from Master Data + Employees
   const availableDepartments = Array.from(
     new Set([
@@ -65,6 +75,13 @@ export const EmployeeMasterData: React.FC = () => {
 
     return matchesSearch && matchesDept && matchesStatus && matchesRole;
   });
+
+  // Paginated employees calculation
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleOpenAddModal = () => {
     setEditingEmployee(null);
@@ -99,34 +116,34 @@ export const EmployeeMasterData: React.FC = () => {
       e.phone,
       `"${e.department}"`,
       `"${e.position}"`,
-      e.role || 'KARYAWAN',
+      e.role,
       e.status,
-      e.joinDate,
+      e.joinedDate,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Master_Data_Karyawan_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `Master_Karyawan_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Master data karyawan berhasil di-export ke CSV!', 'success');
+    showToast('Data karyawan berhasil di-export ke CSV.', 'success');
   };
 
   return (
     <div className="space-y-6">
-      {/* Header & Master Data Sub-Navigation Tabs */}
-      <div className="flex flex-col space-y-4 pb-4 border-b border-zinc-800">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Page Header & Navigation */}
+      <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl p-6 space-y-6 shadow-2xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2 tracking-tight">
-              <Layers className="w-5 h-5 text-indigo-400" />
-              Kelola Master Data Perusahaan
+            <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2.5">
+              <Users className="w-5 h-5 text-indigo-400" />
+              <span>Manajemen Master Data Perusahaan</span>
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Kelola data master karyawan, struktur departemen/divisi, dan hierarki posisi/jabatan perusahaan
+            <p className="text-xs text-zinc-400 mt-1">
+              Kelola master data karyawan, struktur departemen & divisi, serta tingkat posisi/jabatan
             </p>
           </div>
 
@@ -159,245 +176,247 @@ export const EmployeeMasterData: React.FC = () => {
           )}
         </div>
 
-        {/* Master Navigation Bar */}
-        <div className="flex items-center gap-2 bg-[#0c0c0e] border border-zinc-800/90 p-1.5 rounded-2xl w-fit overflow-x-auto">
+        {/* Master Navigation Bar - Centered & Grid Balanced */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 bg-[#09090b] border border-zinc-800/90 p-1.5 rounded-2xl shadow-inner">
           <button
             onClick={() => setActiveMasterTab('EMPLOYEES')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'EMPLOYEES'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>1. Master Karyawan</span>
-            <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px]">
+            <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px] shrink-0">
               {employees.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveMasterTab('DEPARTMENTS')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'DEPARTMENTS'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>2. Master Departemen & Divisi</span>
-            <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px]">
+            <span className="ml-1 bg-white/10 px-2 py-0.5 rounded-full font-mono text-[10px] shrink-0">
               {departments.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveMasterTab('POSITIONS')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeMasterTab === 'POSITIONS'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-bold'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
             }`}
           >
-            <Briefcase className="w-4 h-4" />
+            <Briefcase className="w-4 h-4 shrink-0 text-indigo-300" />
             <span>3. Master Jabatan / Posisi</span>
           </button>
         </div>
       </div>
 
-      {/* Sub-Tab Views */}
+      {/* Render Active Master Tab */}
+      {activeMasterTab === 'EMPLOYEES' && (
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-xl">
+            {/* Search input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari berdasarkan nama, NIP, atau email karyawan..."
+                className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2 text-xs text-zinc-100 placeholder-zinc-500 outline-none transition-colors"
+              />
+            </div>
+
+            {/* Filter Dropdowns */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl">
+                <Filter className="w-3.5 h-3.5 text-zinc-400" />
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
+                >
+                  <option value="ALL" className="bg-[#0c0c0e]">Semua Departemen</option>
+                  {availableDepartments.map((dept) => (
+                    <option key={dept} value={dept} className="bg-[#0c0c0e]">
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
+                >
+                  <option value="ALL" className="bg-[#0c0c0e]">Semua Status</option>
+                  <option value="AKTIF" className="bg-[#0c0c0e]">Aktif</option>
+                  <option value="NON_AKTIF" className="bg-[#0c0c0e]">Non-Aktif</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl">
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
+                >
+                  <option value="ALL" className="bg-[#0c0c0e]">Semua Role</option>
+                  <option value="KARYAWAN" className="bg-[#0c0c0e]">Karyawan WFH</option>
+                  <option value="HRD_ADMIN" className="bg-[#0c0c0e]">Admin HRD</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Employees Table with Pagination */}
+          <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="min-w-[850px] w-full text-left text-xs">
+                <thead className="bg-[#09090b] text-zinc-400 font-mono uppercase tracking-wider border-b border-zinc-800">
+                  <tr>
+                    <th className="px-6 py-4 whitespace-nowrap">Karyawan</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Departemen & Jabatan</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Kontak</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Role System</th>
+                    <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                    <th className="px-6 py-4 text-right whitespace-nowrap">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60 font-sans">
+                  {paginatedEmployees.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 font-mono">
+                        Tidak ada data karyawan yang cocok dengan pencarian / filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedEmployees.map((emp) => (
+                      <tr key={emp.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={emp.avatarUrl}
+                              alt={emp.fullName}
+                              className="w-10 h-10 rounded-xl object-cover ring-1 ring-zinc-700 shrink-0"
+                            />
+                            <div>
+                              <p className="font-bold text-zinc-100 whitespace-nowrap">{emp.fullName}</p>
+                              <span className="text-[11px] font-mono text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 inline-block mt-0.5 whitespace-nowrap">
+                                NIP: {emp.nip}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="font-semibold text-zinc-200 whitespace-nowrap">{emp.department}</p>
+                          <p className="text-zinc-400 text-[11px] whitespace-nowrap">{emp.position}</p>
+                        </td>
+                        <td className="px-6 py-4 space-y-1 text-zinc-400 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap">
+                            <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <span>{emp.email}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] whitespace-nowrap">
+                            <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                            <span>{emp.phone}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border inline-block whitespace-nowrap ${
+                              emp.role === 'HRD_ADMIN'
+                                ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                                : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                            }`}
+                          >
+                            {emp.role === 'HRD_ADMIN' ? 'ADMIN HRD' : 'KARYAWAN WFH'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1.5 whitespace-nowrap ${
+                              emp.status === 'AKTIF'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                emp.status === 'AKTIF' ? 'bg-emerald-400' : 'bg-rose-400'
+                              }`}
+                            />
+                            <span>{emp.status}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            <button
+                              onClick={() => handleOpenEditModal(emp)}
+                              className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-indigo-400 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-zinc-700"
+                              title="Edit Data Karyawan"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(emp)}
+                              className="p-2 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-500/20"
+                              title="Hapus Karyawan"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Reusable Pagination Component */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredEmployees.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+            />
+          </div>
+        </div>
+      )}
+
       {activeMasterTab === 'DEPARTMENTS' && <DepartmentMasterManager />}
       {activeMasterTab === 'POSITIONS' && <PositionMasterManager />}
 
-      {activeMasterTab === 'EMPLOYEES' && (
-        <>
-          {/* Filter and Search Bar */}
-      <div className="bg-[#0c0c0e] border border-zinc-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan Nama, NIP, Email..."
-            className="w-full bg-[#09090b] border border-zinc-800 focus:border-indigo-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-200 outline-none transition-colors"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Department Filter */}
-          <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl text-xs">
-            <Filter className="w-3.5 h-3.5 text-indigo-400" />
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
-            >
-              <option value="ALL">Semua Departemen</option>
-              {availableDepartments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Role Filter */}
-          <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl text-xs">
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
-            >
-              <option value="ALL">Semua Role</option>
-              <option value="KARYAWAN">Role: Karyawan</option>
-              <option value="HRD_ADMIN">Role: Admin HRD</option>
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-2 bg-[#09090b] border border-zinc-800 px-3 py-1.5 rounded-xl text-xs">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-transparent text-zinc-200 outline-none cursor-pointer text-xs"
-            >
-              <option value="ALL">Semua Status</option>
-              <option value="AKTIF">Status Aktif</option>
-              <option value="NON_AKTIF">Status Non-Aktif</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Employees Data Table */}
-      <div className="bg-[#0c0c0e] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-zinc-300">
-            <thead className="bg-[#09090b] uppercase font-mono font-bold text-zinc-400 border-b border-zinc-800">
-              <tr>
-                <th className="py-4 px-6">Karyawan</th>
-                <th className="py-4 px-6">Kontak & Email</th>
-                <th className="py-4 px-6">Departemen & Jabatan</th>
-                <th className="py-4 px-6">Role Akses</th>
-                <th className="py-4 px-6">Jatah WFH</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6 text-right">Aksi Manajemen</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/80">
-              {filteredEmployees.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-zinc-500">
-                    Tidak ada data karyawan yang sesuai dengan kriteria pencarian.
-                  </td>
-                </tr>
-              ) : (
-                filteredEmployees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-zinc-800/40 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={emp.avatarUrl}
-                          alt={emp.fullName}
-                          className="w-10 h-10 rounded-lg object-cover ring-1 ring-zinc-700"
-                        />
-                        <div>
-                          <p className="font-bold text-zinc-100 text-sm">{emp.fullName}</p>
-                          <p className="font-mono text-[11px] text-indigo-400 font-semibold">
-                            {emp.nip}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6 space-y-0.5">
-                      <p className="text-zinc-200 flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                        {emp.email}
-                      </p>
-                      <p className="text-zinc-400 flex items-center gap-1.5 text-[11px] font-mono">
-                        <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                        {emp.phone}
-                      </p>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <p className="font-semibold text-zinc-200">{emp.position}</p>
-                      <p className="text-[11px] text-zinc-400">{emp.department}</p>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      {emp.role === 'HRD_ADMIN' ? (
-                        <span className="inline-flex items-center gap-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold">
-                          <ShieldCheck className="w-3.5 h-3.5" /> Admin HRD
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium">
-                          <User className="w-3.5 h-3.5 text-zinc-400" /> Karyawan
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <span className="bg-[#09090b] px-2.5 py-1 rounded-lg border border-zinc-800 text-zinc-300 font-mono text-xs">
-                        {emp.wfhAllowanceDaysPerWeek || 3} hari/minggu
-                      </span>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      {emp.status === 'AKTIF' ? (
-                        <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-2.5 py-1 rounded text-[11px] font-mono font-bold">
-                          <CheckCircle2 className="w-3 h-3" /> Aktif
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 bg-rose-500/10 text-rose-400 border border-rose-500/25 px-2.5 py-1 rounded text-[11px] font-mono font-bold">
-                          <XCircle className="w-3 h-3" /> Non-Aktif
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEditModal(emp)}
-                          className="p-2 bg-[#121215] hover:bg-zinc-800 text-indigo-300 rounded-lg border border-zinc-800 transition-colors"
-                          title="Edit Data Karyawan"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(emp)}
-                          className="p-2 bg-[#121215] hover:bg-rose-950/60 text-rose-400 hover:text-rose-300 rounded-lg border border-zinc-800 transition-colors"
-                          title="Hapus Karyawan"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add / Edit Modal */}
+      {/* Add / Edit Employee Modal */}
       <EmployeeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveEmployee}
-        initialData={editingEmployee}
+        employee={editingEmployee}
       />
 
-      {/* Bulk Import Excel / CSV Modal */}
+      {/* Bulk Import Excel/CSV Modal */}
       <BulkImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
       />
-        </>
-      )}
     </div>
   );
 };
