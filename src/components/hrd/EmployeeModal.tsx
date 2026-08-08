@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Employee, Department, Role } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, Building2, Briefcase, Calendar, ShieldCheck, Upload, Camera, Trash2, CheckCircle2, KeyRound } from 'lucide-react';
 
 interface EmployeeModalProps {
   isOpen: boolean;
@@ -142,6 +142,16 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+        {/* Info Banner Default Password */}
+        {!targetData && (
+          <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-3 text-indigo-300 text-xs flex items-center gap-2.5">
+            <KeyRound className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>
+              Password login akun default untuk karyawan baru: <strong className="font-mono text-white underline">password123</strong> (dapat diubah nanti).
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* NIP */}
           <div>
