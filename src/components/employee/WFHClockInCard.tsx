@@ -62,7 +62,7 @@ export const WFHClockInCard: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
-  // Find today's attendance record for current user (check by employeeId OR NIP)
+  // Find today's attendance record for current user from MySQL API synced state
   const todayRecord = attendanceRecords.find(
     (r) =>
       (r.employeeId === currentUser.id || r.employeeNip === currentUser.nip) &&
@@ -240,11 +240,15 @@ export const WFHClockInCard: React.FC = () => {
     }
   };
 
-  // Personal Monthly Stats calculation for current employee
-  const myRecords = attendanceRecords.filter((r) => r.employeeId === currentUser.id || r.employeeNip === currentUser.nip);
-  const totalDaysPresent = myRecords.length || 18;
-  const totalHoursWorked = totalDaysPresent * 8;
+  // 100% Dynamic Personal Monthly & Realtime Stats calculated from MySQL Backend API records
+  const myRecords = attendanceRecords.filter(
+    (r) => r.employeeId === currentUser.id || r.employeeNip === currentUser.nip
+  );
+  const totalDaysPresent = myRecords.length;
+  const totalHoursWorked = myRecords.reduce((total, r) => total + (r.clockOutTime ? 8 : 4), 0);
   const lateDays = myRecords.filter((r) => r.status === 'LATE').length;
+  const wfhQuotaLimit = currentUser.wfhAllowanceDaysPerWeek || 3;
+  const weeklyWfhCount = Math.min(myRecords.length, wfhQuotaLimit);
 
   return (
     <div className="space-y-6">
@@ -270,8 +274,10 @@ export const WFHClockInCard: React.FC = () => {
                 Halo, {currentUser.name}! 👋
               </h1>
               <p className="text-sm text-zinc-400 mt-0.5">
-                {todayRecord
-                  ? 'Anda sudah melakukan Absen Masuk WFH hari ini.'
+                {todayRecord?.clockOutTime
+                  ? 'Anda telah menyelesaikan jam kerja WFH hari ini.'
+                  : todayRecord
+                  ? 'Anda sudah melakukan Absen Masuk. Isi rekap hasil kerja untuk Absen Pulang.'
                   : 'Ambil foto webcam dan isi rencana kerja untuk mengaktifkan tombol Absen Masuk.'}
               </p>
             </div>
@@ -302,7 +308,7 @@ export const WFHClockInCard: React.FC = () => {
         </div>
       </div>
 
-      {/* Personal Summary Stat Cards */}
+      {/* 100% Dynamic Personal Summary Stat Cards from Real MySQL API */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Kuota WFH Minggu Ini */}
         <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
@@ -314,11 +320,18 @@ export const WFHClockInCard: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline justify-between">
-              <span className="text-xl font-extrabold font-mono text-zinc-100">3 / 3 Hari</span>
-              <span className="text-[11px] font-mono text-emerald-400 font-bold">100% Kuota</span>
+              <span className="text-xl font-extrabold font-mono text-zinc-100">
+                {weeklyWfhCount} / {wfhQuotaLimit} Hari
+              </span>
+              <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                {Math.round((weeklyWfhCount / wfhQuotaLimit) * 100)}% Kuota
+              </span>
             </div>
             <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full w-full" />
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all"
+                style={{ width: `${Math.min(100, (weeklyWfhCount / wfhQuotaLimit) * 100)}%` }}
+              />
             </div>
           </div>
         </div>
@@ -336,7 +349,9 @@ export const WFHClockInCard: React.FC = () => {
               <span className="text-xl font-extrabold font-mono text-zinc-100">{totalHoursWorked} Jam</span>
               <span className="text-[11px] font-mono text-sky-400 font-bold">Target 160 Jam</span>
             </div>
-            <p className="text-[10px] text-zinc-400 mt-1 font-mono">Tercapai 100% dari standar WFH</p>
+            <p className="text-[10px] text-zinc-400 mt-1 font-mono">
+              Tercapai {Math.round((totalHoursWorked / 160) * 100)}% dari target WFH
+            </p>
           </div>
         </div>
 
