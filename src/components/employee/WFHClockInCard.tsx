@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { AttendanceRecord, LocationData } from '../../types';
-import { WebcamCaptureModal } from './WebcamCaptureModal';
+import { Modal } from '../common/Modal';
+import { WebcamCapture } from '../common/WebcamCapture';
 import { LeaveRequestModal } from './LeaveRequestModal';
 import { formatTimeWIB, formatIndonesianDate, getTodayDateString } from '../../utils/dateUtils';
 import {
@@ -367,7 +368,7 @@ export const WFHClockInCard: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setIsWebcamOpen(true)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg cursor-pointer"
                         >
                           <RefreshCw className="w-3.5 h-3.5" /> Ulangi Foto
                         </button>
@@ -514,11 +515,18 @@ export const WFHClockInCard: React.FC = () => {
       </div>
 
       {/* Webcam Capture Modal */}
-      <WebcamCaptureModal
+      <Modal
         isOpen={isWebcamOpen}
         onClose={() => setIsWebcamOpen(false)}
-        onCapture={handlePhotoCaptured}
-      />
+        title="Capture Foto Presensi WFH"
+        subtitle="Ambil foto realtime dari kamera webcam untuk verifikasi absensi"
+        maxWidth="lg"
+      >
+        <WebcamCapture
+          onPhotoCaptured={handlePhotoCaptured}
+          initialPhotoUrl={photoProofUrl || undefined}
+        />
+      </Modal>
 
       {/* Leave Request Form Modal */}
       <LeaveRequestModal
