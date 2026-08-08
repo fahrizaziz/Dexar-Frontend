@@ -11,9 +11,12 @@ interface EmployeeModalProps {
   initialData?: Employee | null;
 }
 
-// Helper to auto-format Indonesian phone numbers into 0812-3456-7890 standard
+// Helper to auto-format Indonesian phone numbers into 08XX-XXXX-XXXX with fixed 08 prefix
 const formatIndonesianPhone = (val: string): string => {
-  const digits = val.replace(/\D/g, '');
+  let digits = val.replace(/\D/g, '');
+  if (!digits.startsWith('08')) {
+    digits = '08' + digits.replace(/^[0-8]*/, '');
+  }
   if (digits.length <= 4) return digits;
   if (digits.length <= 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
   return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 13)}`;
@@ -54,7 +57,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [nip, setNip] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('08');
   const [department, setDepartment] = useState<string>('');
   const [position, setPosition] = useState('');
   const [role, setRole] = useState<string>('');
@@ -95,7 +98,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setNip(`EMP-2026-${nextSeq}`);
       setFullName('');
       setEmail('');
-      setPhone('');
+      setPhone('08');
       setDepartment(''); // Default to empty string for '-- Pilih Departemen --'
       setPosition('');
       setRole(''); // Default to empty string for '-- Pilih Role / Hak Akses --'
@@ -179,7 +182,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             />
           </div>
 
-          {/* Phone */}
+          {/* Phone (Fixed 08 prefix protection) */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Nomor Telepon / WhatsApp *</label>
             <input
