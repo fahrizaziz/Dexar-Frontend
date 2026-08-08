@@ -304,7 +304,13 @@ export const storageService = {
         localStorage.setItem(GEOFENCE_KEY, JSON.stringify(INITIAL_GEOFENCE_CONFIG));
         return INITIAL_GEOFENCE_CONFIG;
       }
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (parsed.wfhIncentivePerDay === 50000) parsed.wfhIncentivePerDay = 0;
+      if (parsed.lateDeductionPerOccurrence === 25000) parsed.lateDeductionPerOccurrence = 0;
+      return {
+        ...INITIAL_GEOFENCE_CONFIG,
+        ...parsed,
+      };
     } catch {
       return INITIAL_GEOFENCE_CONFIG;
     }

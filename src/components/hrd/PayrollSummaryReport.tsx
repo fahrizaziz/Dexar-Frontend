@@ -52,16 +52,32 @@ export const PayrollSummaryReport: React.FC = () => {
 
   // State for Rate Configuration Modal
   const [isRatesModalOpen, setIsRatesModalOpen] = useState(false);
-  const [editWfhRate, setEditWfhRate] = useState<string>((geofenceConfig.wfhIncentivePerDay || 50000).toString());
-  const [editLateRate, setEditLateRate] = useState<string>((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
+  const [editWfhRate, setEditWfhRate] = useState<string>(
+    geofenceConfig.wfhIncentivePerDay && geofenceConfig.wfhIncentivePerDay !== 0
+      ? geofenceConfig.wfhIncentivePerDay.toString()
+      : ''
+  );
+  const [editLateRate, setEditLateRate] = useState<string>(
+    geofenceConfig.lateDeductionPerOccurrence && geofenceConfig.lateDeductionPerOccurrence !== 0
+      ? geofenceConfig.lateDeductionPerOccurrence.toString()
+      : ''
+  );
 
-  const wfhRate = geofenceConfig.wfhIncentivePerDay || 50000;
-  const lateRate = geofenceConfig.lateDeductionPerOccurrence || 25000;
+  const wfhRate = geofenceConfig.wfhIncentivePerDay || 0;
+  const lateRate = geofenceConfig.lateDeductionPerOccurrence || 0;
 
   useEffect(() => {
-    setEditWfhRate((geofenceConfig.wfhIncentivePerDay || 50000).toString());
-    setEditLateRate((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
-  }, [geofenceConfig]);
+    setEditWfhRate(
+      geofenceConfig.wfhIncentivePerDay && geofenceConfig.wfhIncentivePerDay !== 0
+        ? geofenceConfig.wfhIncentivePerDay.toString()
+        : ''
+    );
+    setEditLateRate(
+      geofenceConfig.lateDeductionPerOccurrence && geofenceConfig.lateDeductionPerOccurrence !== 0
+        ? geofenceConfig.lateDeductionPerOccurrence.toString()
+        : ''
+    );
+  }, [geofenceConfig, isRatesModalOpen]);
 
   const handleSaveRates = (e: React.FormEvent) => {
     e.preventDefault();
@@ -433,8 +449,8 @@ export const PayrollSummaryReport: React.FC = () => {
                   type="number"
                   min={0}
                   step={5000}
-                  value={editWfhRate === '0' || editWfhRate === '' ? '' : editWfhRate}
-                  onChange={(e) => setEditWfhRate(e.target.value === '' ? '0' : e.target.value)}
+                  value={editWfhRate}
+                  onChange={(e) => setEditWfhRate(e.target.value)}
                   placeholder="0"
                   className="w-full bg-zinc-950 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />
@@ -450,8 +466,8 @@ export const PayrollSummaryReport: React.FC = () => {
                   type="number"
                   min={0}
                   step={5000}
-                  value={editLateRate === '0' || editLateRate === '' ? '' : editLateRate}
-                  onChange={(e) => setEditLateRate(e.target.value === '' ? '0' : e.target.value)}
+                  value={editLateRate}
+                  onChange={(e) => setEditLateRate(e.target.value)}
                   placeholder="0"
                   className="w-full bg-zinc-950 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />

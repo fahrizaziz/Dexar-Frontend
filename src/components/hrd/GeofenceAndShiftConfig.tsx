@@ -298,8 +298,8 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                       type="number"
                       min={0}
                       step={5000}
-                      value={wfhIncentivePerDay === '0' || wfhIncentivePerDay === '' ? '' : wfhIncentivePerDay}
-                      onChange={(e) => setWfhIncentivePerDay(e.target.value === '' ? '0' : e.target.value)}
+                      value={wfhIncentivePerDay}
+                      onChange={(e) => setWfhIncentivePerDay(e.target.value)}
                       placeholder="0"
                       className="w-full bg-zinc-900 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-3 outline-none focus:border-cyan-500 text-xs"
                     />
@@ -315,8 +315,8 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                       type="number"
                       min={0}
                       step={5000}
-                      value={lateDeductionPerOccurrence === '0' || lateDeductionPerOccurrence === '' ? '' : lateDeductionPerOccurrence}
-                      onChange={(e) => setLateDeductionPerOccurrence(e.target.value === '' ? '0' : e.target.value)}
+                      value={lateDeductionPerOccurrence}
+                      onChange={(e) => setLateDeductionPerOccurrence(e.target.value)}
                       placeholder="0"
                       className="w-full bg-zinc-900 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-3 outline-none focus:border-cyan-500 text-xs"
                     />
