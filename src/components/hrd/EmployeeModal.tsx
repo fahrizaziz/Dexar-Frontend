@@ -47,7 +47,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [department, setDepartment] = useState<Department>('Engineering & Tech');
+  const [department, setDepartment] = useState<string>('');
   const [position, setPosition] = useState('');
   const [role, setRole] = useState<Role>('KARYAWAN');
   const [status, setStatus] = useState<'AKTIF' | 'NON_AKTIF'>('AKTIF');
@@ -75,7 +75,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setFullName(initialData.fullName);
       setEmail(initialData.email);
       setPhone(initialData.phone);
-      setDepartment(initialData.department);
+      setDepartment(initialData.department || '');
       setPosition(initialData.position);
       setRole(initialData.role || 'KARYAWAN');
       setStatus(initialData.status);
@@ -89,7 +89,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setFullName('');
       setEmail('');
       setPhone('0812-');
-      setDepartment('Engineering & Tech');
+      setDepartment(''); // Default to empty string for '-- Pilih Departemen --'
       setPosition('');
       setRole('KARYAWAN');
       setStatus('AKTIF');
@@ -106,7 +106,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       fullName: fullName.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      department,
+      department: (department || 'Engineering & Tech') as Department,
       position: position.trim(),
       role,
       status,
@@ -189,10 +189,12 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Departemen / Divisi *</label>
             <select
+              required
               value={department}
-              onChange={(e) => setDepartment(e.target.value as Department)}
+              onChange={(e) => setDepartment(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
+              <option value="" disabled>-- Pilih Departemen / Divisi --</option>
               {activeMasterDeptNames.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
