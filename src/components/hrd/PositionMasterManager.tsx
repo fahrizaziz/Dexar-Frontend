@@ -53,7 +53,8 @@ export const PositionMasterManager: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingPos(null);
-    setCode(`POS-${Math.floor(100 + Math.random() * 900)}`);
+    const nextSeq = String(activePositions.length + 1).padStart(3, '0');
+    setCode(`POS-${nextSeq}`);
     setName('');
     setDepartmentName(departments[0]?.name || 'Engineering & Tech');
     setLevel('Staff');
@@ -276,15 +277,21 @@ export const PositionMasterManager: React.FC = () => {
       >
         <form onSubmit={handleSave} className="space-y-4 text-sm">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Kode Jabatan *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">Kode Jabatan *</label>
+              <span className="text-[10px] text-slate-500 font-mono">Format: POS-00X</span>
+            </div>
             <input
               type="text"
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Contoh: POS-001"
+              placeholder="Contoh: POS-001 atau POS-FE"
               className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Dapat diedit manual atau biarkan urut otomatis ({`POS-${String(activePositions.length + 1).padStart(3, '0')}`}).
+            </p>
           </div>
 
           <div>

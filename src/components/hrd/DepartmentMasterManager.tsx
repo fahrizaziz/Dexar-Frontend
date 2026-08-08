@@ -49,7 +49,8 @@ export const DepartmentMasterManager: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingDept(null);
-    setCode(`DEPT-${Math.floor(100 + Math.random() * 900)}`);
+    const nextSeq = String(activeDepts.length + 1).padStart(3, '0');
+    setCode(`DEPT-${nextSeq}`);
     setName('');
     setHeadOfDepartment('');
     setDescription('');
@@ -251,15 +252,21 @@ export const DepartmentMasterManager: React.FC = () => {
       >
         <form onSubmit={handleSave} className="space-y-4 text-sm">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Kode Departemen *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">Kode Departemen *</label>
+              <span className="text-[10px] text-slate-500 font-mono">Format: DEPT-00X</span>
+            </div>
             <input
               type="text"
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Contoh: DEPT-001"
+              placeholder="Contoh: DEPT-001 atau DEPT-ENG"
               className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
+            <p className="text-[10px] text-slate-500 mt-1">
+              Dapat diedit manual atau biarkan urut otomatis ({`DEPT-${String(activeDepts.length + 1).padStart(3, '0')}`}).
+            </p>
           </div>
 
           <div>
