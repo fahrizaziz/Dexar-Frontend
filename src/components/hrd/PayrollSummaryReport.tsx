@@ -435,7 +435,7 @@ export const PayrollSummaryReport: React.FC = () => {
                   step={5000}
                   value={editWfhRate === '0' || editWfhRate === '' ? '' : editWfhRate}
                   onChange={(e) => setEditWfhRate(e.target.value === '' ? '0' : e.target.value)}
-                  placeholder="0 (Contoh: 50000)"
+                  placeholder="0"
                   className="w-full bg-zinc-950 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />
               </div>
@@ -452,7 +452,7 @@ export const PayrollSummaryReport: React.FC = () => {
                   step={5000}
                   value={editLateRate === '0' || editLateRate === '' ? '' : editLateRate}
                   onChange={(e) => setEditLateRate(e.target.value === '' ? '0' : e.target.value)}
-                  placeholder="0 (Contoh: 25000)"
+                  placeholder="0"
                   className="w-full bg-zinc-950 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-2.5 outline-none focus:border-purple-500"
                 />
               </div>
