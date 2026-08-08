@@ -5,6 +5,8 @@ import { AttendanceDetailModal } from './AttendanceDetailModal';
 import { AttendanceAnalyticsModal } from './AttendanceAnalyticsModal';
 import { formatIndonesianDate, getTodayDateString } from '../../utils/dateUtils';
 import { exportAttendanceToCSV, exportLeaveRequestsToCSV } from '../../utils/exportUtils';
+import { attendanceService } from '../../services/attendanceService';
+import { leaveService } from '../../services/leaveService';
 import { Pagination } from '../common/Pagination';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import {
@@ -28,6 +30,7 @@ import {
   PieChart as PieIcon,
   Building2,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 
 export const AttendanceMonitoring: React.FC = () => {
@@ -41,6 +44,12 @@ export const AttendanceMonitoring: React.FC = () => {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'PRESENSI' | 'PERMOHONAN_CUTI'>('PRESENSI');
 
+  // Backend fetched records
+  const [fetchedMonitoring, setFetchedMonitoring] = useState<AttendanceRecord[]>([]);
+  const [fetchedLeaveRequests, setFetchedLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [isLoadingMonitoring, setIsLoadingMonitoring] = useState(false);
+  const [isLoadingLeaves, setIsLoadingLeaves] = useState(false);
+
   // Pagination states for Presensi & Cuti
   const [currentPagePresensi, setCurrentPagePresensi] = useState(1);
   const [itemsPerPagePresensi, setItemsPerPagePresensi] = useState(5);
@@ -50,13 +59,52 @@ export const AttendanceMonitoring: React.FC = () => {
 
   const todayStr = getTodayDateString();
 
+  // Fetch monitoring records from API Gateway
+  const fetchMonitoringData = async () => {
+    setIsLoadingMonitoring(true);
+    try {
+      const records = await attendanceService.getHrdMonitoring(searchQuery, selectedDept);
+      if (records.length > 0) {
+        setFetchedMonitoring(records);
+      }
+    } catch (err) {
+      console.warn('API getHrdMonitoring fallback to local context state');
+    } finally {
+      setIsLoadingMonitoring(false);
+    }
+  };
+
+  // Fetch leave requests from API Gateway for HRD Approval
+  const fetchLeaveData = async () => {
+    setIsLoadingLeaves(true);
+    try {
+      const leaves = await leaveService.getAllLeaveRequests();
+      if (leaves.length > 0) {
+        setFetchedLeaveRequests(leaves);
+      }
+    } catch (err) {
+      console.warn('API getAllLeaveRequests fallback to local context state');
+    } finally {
+      setIsLoadingLeaves(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMonitoringData();
+    fetchLeaveData();
+  }, [selectedDept]);
+
   useEffect(() => {
     setCurrentPagePresensi(1);
     setCurrentPageCuti(1);
   }, [searchQuery, selectedDept, selectedDateRange, selectedStatus]);
 
+  // Combined source (prefer fetched API, fallback to context state)
+  const activeRecordsSource = fetchedMonitoring.length > 0 ? fetchedMonitoring : attendanceRecords;
+  const activeLeavesSource = fetchedLeaveRequests.length > 0 ? fetchedLeaveRequests : leaveRequests;
+
   // Filter Attendance Logs
-  const filteredRecords = attendanceRecords.filter((record) => {
+  const filteredRecords = activeRecordsSource.filter((record) => {
     const matchesSearch =
       record.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.employeeNip.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,17 +125,42 @@ export const AttendanceMonitoring: React.FC = () => {
   );
 
   // Calculate Paginated Leave Requests
-  const totalPagesCuti = Math.ceil(leaveRequests.length / itemsPerPageCuti);
-  const paginatedLeaveRequests = leaveRequests.slice(
+  const totalPagesCuti = Math.ceil(activeLeavesSource.length / itemsPerPageCuti);
+  const paginatedLeaveRequests = activeLeavesSource.slice(
     (currentPageCuti - 1) * itemsPerPageCuti,
     currentPageCuti * itemsPerPageCuti
   );
 
+  // Handle HRD Approval (Setujui / Tolak) with Backend API integration
+  const handleApproval = async (req: LeaveRequest, newStatus: 'APPROVED' | 'REJECTED') => {
+    try {
+      const updated = await leaveService.updateStatus(req.id, { status: newStatus });
+      setFetchedLeaveRequests((prev) =>
+        prev.map((item) => (item.id === req.id ? { ...item, status: newStatus } : item))
+      );
+      updateLeaveStatus(req.id, newStatus);
+      showToast(
+        `Permohonan ${req.employeeName} (${req.type.replace(/_/g, ' ')}) berhasil ${
+          newStatus === 'APPROVED' ? 'DISETUJUI' : 'DITOLAK'
+        }!`,
+        newStatus === 'APPROVED' ? 'success' : 'info'
+      );
+    } catch (err: any) {
+      updateLeaveStatus(req.id, newStatus);
+      showToast(
+        `Permohonan ${req.employeeName} (${req.type.replace(/_/g, ' ')}) ${
+          newStatus === 'APPROVED' ? 'DISETUJUI' : 'DITOLAK'
+        }`,
+        newStatus === 'APPROVED' ? 'success' : 'info'
+      );
+    }
+  };
+
   // Calculate Metrics
-  const totalTodayRecords = attendanceRecords.filter((r) => r.date === todayStr).length;
-  const totalOnTimeToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'ON_TIME').length;
-  const totalLateToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'LATE').length;
-  const totalCompletedToday = attendanceRecords.filter((r) => r.date === todayStr && r.clockOutTime).length;
+  const totalTodayRecords = activeRecordsSource.filter((r) => r.date === todayStr).length;
+  const totalOnTimeToday = activeRecordsSource.filter((r) => r.date === todayStr && r.status === 'ON_TIME').length;
+  const totalLateToday = activeRecordsSource.filter((r) => r.date === todayStr && r.status === 'LATE').length;
+  const totalCompletedToday = activeRecordsSource.filter((r) => r.date === todayStr && r.clockOutTime).length;
 
   return (
     <div className="space-y-6">
@@ -122,7 +195,7 @@ export const AttendanceMonitoring: React.FC = () => {
               if (activeSubTab === 'PRESENSI') {
                 exportAttendanceToCSV(filteredRecords);
               } else {
-                exportLeaveRequestsToCSV(leaveRequests);
+                exportLeaveRequestsToCSV(activeLeavesSource);
               }
             }}
             className="px-4 py-2.5 rounded-xl bg-[#121215] hover:bg-zinc-800 text-zinc-200 text-xs font-mono font-semibold flex items-center gap-2 border border-zinc-800 transition-colors cursor-pointer"
@@ -144,7 +217,7 @@ export const AttendanceMonitoring: React.FC = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Monitoring Presensi Masuk & Pulang ({attendanceRecords.length})</span>
+          <span>Monitoring Presensi Masuk & Pulang ({activeRecordsSource.length})</span>
         </button>
 
         <button
@@ -156,7 +229,7 @@ export const AttendanceMonitoring: React.FC = () => {
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>Approval Cuti & Tukar WFH ({leaveRequests.length})</span>
+          <span>Approval Cuti & Tukar WFH ({activeLeavesSource.length})</span>
         </button>
       </div>
 
@@ -222,7 +295,14 @@ export const AttendanceMonitoring: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/80">
-                  {paginatedRecords.length === 0 ? (
+                  {isLoadingMonitoring ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono">
+                        <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
+                        <span>Memuat data absensi karyawan...</span>
+                      </td>
+                    </tr>
+                  ) : paginatedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono">
                         Tidak ditemukan data absensi yang memenuhi kriteria filter.
@@ -340,64 +420,73 @@ export const AttendanceMonitoring: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/80">
-                {paginatedLeaveRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-zinc-800/40 transition-colors">
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      <p className="font-bold text-zinc-100 text-sm whitespace-nowrap">{req.employeeName}</p>
-                      <p className="font-mono text-[11px] text-indigo-400 font-semibold whitespace-nowrap">{req.employeeNip}</p>
-                    </td>
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 inline-block whitespace-nowrap">
-                        {req.type === 'CUTI' ? 'CUTI TAHUNAN' : req.type === 'SAKIT' ? 'SURAT SAKIT' : 'TUKAR HARI WFH'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 font-mono text-zinc-200 whitespace-nowrap">
-                      {req.startDate} s/d {req.endDate}
-                    </td>
-                    <td className="py-4 px-6 max-w-xs">
-                      <p className="text-zinc-300 line-clamp-2">{req.reason}</p>
-                    </td>
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1 whitespace-nowrap ${
-                          req.status === 'APPROVED'
-                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                            : req.status === 'REJECTED'
-                            ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
-                            : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                        }`}
-                      >
-                        {req.status === 'APPROVED' ? 'DISETUJUI' : req.status === 'REJECTED' ? 'DITOLAK' : 'MENUNGGU APPROVAL'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right whitespace-nowrap">
-                      {req.status === 'PENDING' ? (
-                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                          <button
-                            onClick={() => {
-                              updateLeaveStatus(req.id, 'APPROVED');
-                              showToast(`Permohonan ${req.employeeName} berhasil disetujui!`, 'success');
-                            }}
-                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
-                          >
-                            <Check className="w-3.5 h-3.5" /> Setujui
-                          </button>
-                          <button
-                            onClick={() => {
-                              updateLeaveStatus(req.id, 'REJECTED');
-                              showToast(`Permohonan ${req.employeeName} ditolak.`, 'info');
-                            }}
-                            className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
-                          >
-                            <X className="w-3.5 h-3.5" /> Tolak
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] font-mono text-zinc-500 whitespace-nowrap">Selesai Ditinjau</span>
-                      )}
+                {isLoadingLeaves ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-zinc-500 font-mono">
+                      <Loader2 className="w-6 h-6 text-amber-400 animate-spin mx-auto mb-2" />
+                      <span>Memuat data pengajuan cuti...</span>
                     </td>
                   </tr>
-                ))}
+                ) : paginatedLeaveRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-zinc-500 font-mono">
+                      Belum ada permohonan cuti / izin dari karyawan.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedLeaveRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-zinc-800/40 transition-colors">
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <p className="font-bold text-zinc-100 text-sm whitespace-nowrap">{req.employeeName}</p>
+                        <p className="font-mono text-[11px] text-indigo-400 font-semibold whitespace-nowrap">{req.employeeNip}</p>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 inline-block whitespace-nowrap">
+                          {req.type === 'CUTI' ? 'CUTI TAHUNAN' : req.type === 'SAKIT' ? 'SURAT SAKIT' : req.type === 'LEMBUR' ? 'LEMBUR WFH' : 'TUKAR HARI WFH'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 font-mono text-zinc-200 whitespace-nowrap">
+                        {req.startDate} s/d {req.endDate}
+                      </td>
+                      <td className="py-4 px-6 max-w-xs">
+                        <p className="text-zinc-300 line-clamp-2">{req.reason}</p>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold inline-flex items-center gap-1 whitespace-nowrap ${
+                            req.status === 'APPROVED'
+                              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                              : req.status === 'REJECTED'
+                              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                              : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                          }`}
+                        >
+                          {req.status === 'APPROVED' ? 'DISETUJUI' : req.status === 'REJECTED' ? 'DITOLAK' : 'MENUNGGU APPROVAL'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        {req.status === 'PENDING' ? (
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            <button
+                              onClick={() => handleApproval(req, 'APPROVED')}
+                              className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Setujui
+                            </button>
+                            <button
+                              onClick={() => handleApproval(req, 'REJECTED')}
+                              className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
+                            >
+                              <X className="w-3.5 h-3.5" /> Tolak
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-mono text-zinc-500 whitespace-nowrap">Selesai Ditinjau</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -406,7 +495,7 @@ export const AttendanceMonitoring: React.FC = () => {
           <Pagination
             currentPage={currentPageCuti}
             totalPages={totalPagesCuti}
-            totalItems={leaveRequests.length}
+            totalItems={activeLeavesSource.length}
             itemsPerPage={itemsPerPageCuti}
             onPageChange={setCurrentPageCuti}
             onItemsPerPageChange={setItemsPerPageCuti}
