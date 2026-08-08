@@ -90,13 +90,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <nav className="hidden xl:flex items-center gap-1.5 bg-[#09090b] p-1.5 rounded-xl border border-zinc-800">
+          {/* Navigation Tabs (Desktop & Tablet) */}
+          <nav className="hidden md:flex items-center gap-1.5 bg-[#09090b] p-1.5 rounded-xl border border-zinc-800">
             {/* Employee Tabs */}
             {canClockIn && (
               <button
                 onClick={() => setActiveTab('ABSENSI_WFH')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
                   activeTab === 'ABSENSI_WFH'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -110,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewHistory && (
               <button
                 onClick={() => setActiveTab('HISTORY_SAYA')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
                   activeTab === 'HISTORY_SAYA'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageLeave && (
               <button
                 onClick={() => setActiveTab('PENGAJUAN_CUTI')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
                   activeTab === 'PENGAJUAN_CUTI'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
@@ -324,6 +324,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <UserCheck className="w-5 h-5" />
               <span>History</span>
+            </button>
+          )}
+
+          {canManageLeave && (
+            <button
+              onClick={() => setActiveTab('PENGAJUAN_CUTI')}
+              className={`flex flex-col items-center gap-1 ${
+                activeTab === 'PENGAJUAN_CUTI' ? 'text-emerald-400 font-bold' : 'text-zinc-400'
+              }`}
+            >
+              <CalendarDays className="w-5 h-5" />
+              <span>Cuti & WFH</span>
             </button>
           )}
 
