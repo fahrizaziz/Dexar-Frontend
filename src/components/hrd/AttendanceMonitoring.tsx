@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AttendanceRecord, LeaveRequest } from '../../types';
 import { AttendanceDetailModal } from './AttendanceDetailModal';
 import { AttendanceAnalyticsModal } from './AttendanceAnalyticsModal';
 import { formatIndonesianDate, getTodayDateString } from '../../utils/dateUtils';
 import { exportAttendanceToCSV, exportLeaveRequestsToCSV } from '../../utils/exportUtils';
+import { Pagination } from '../common/Pagination';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import {
   ShieldCheck,
@@ -40,7 +41,19 @@ export const AttendanceMonitoring: React.FC = () => {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'PRESENSI' | 'PERMOHONAN_CUTI'>('PRESENSI');
 
+  // Pagination states for Presensi & Cuti
+  const [currentPagePresensi, setCurrentPagePresensi] = useState(1);
+  const [itemsPerPagePresensi, setItemsPerPagePresensi] = useState(5);
+
+  const [currentPageCuti, setCurrentPageCuti] = useState(1);
+  const [itemsPerPageCuti, setItemsPerPageCuti] = useState(5);
+
   const todayStr = getTodayDateString();
+
+  useEffect(() => {
+    setCurrentPagePresensi(1);
+    setCurrentPageCuti(1);
+  }, [searchQuery, selectedDept, selectedDateRange, selectedStatus]);
 
   // Filter Attendance Logs
   const filteredRecords = attendanceRecords.filter((record) => {
@@ -56,40 +69,25 @@ export const AttendanceMonitoring: React.FC = () => {
     return matchesSearch && matchesDept && matchesDate && matchesStatus;
   });
 
+  // Calculate Paginated Presensi
+  const totalPagesPresensi = Math.ceil(filteredRecords.length / itemsPerPagePresensi);
+  const paginatedRecords = filteredRecords.slice(
+    (currentPagePresensi - 1) * itemsPerPagePresensi,
+    currentPagePresensi * itemsPerPagePresensi
+  );
+
+  // Calculate Paginated Leave Requests
+  const totalPagesCuti = Math.ceil(leaveRequests.length / itemsPerPageCuti);
+  const paginatedLeaveRequests = leaveRequests.slice(
+    (currentPageCuti - 1) * itemsPerPageCuti,
+    currentPageCuti * itemsPerPageCuti
+  );
+
   // Calculate Metrics
   const totalTodayRecords = attendanceRecords.filter((r) => r.date === todayStr).length;
   const totalOnTimeToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'ON_TIME').length;
   const totalLateToday = attendanceRecords.filter((r) => r.date === todayStr && r.status === 'LATE').length;
   const totalCompletedToday = attendanceRecords.filter((r) => r.date === todayStr && r.clockOutTime).length;
-
-  // Visual Chart Data Calculations
-  const totalAllRecords = attendanceRecords.length;
-  const onTimeCount = attendanceRecords.filter((r) => r.status === 'ON_TIME' || r.status === 'WORK_COMPLETED').length;
-  const lateCount = attendanceRecords.filter((r) => r.status === 'LATE').length;
-  const approvedLeaves = leaveRequests.filter((l) => l.status === 'APPROVED').length;
-  const summaryCompletedCount = attendanceRecords.filter((r) => Boolean(r.workSummary)).length;
-
-  const onTimePercentage = totalAllRecords > 0 ? Math.round((onTimeCount / totalAllRecords) * 100) : 100;
-  const summaryPercentage = totalAllRecords > 0 ? Math.round((summaryCompletedCount / totalAllRecords) * 100) : 0;
-  const latePercentage = totalAllRecords > 0 ? Math.round((lateCount / totalAllRecords) * 100) : 0;
-
-  // Attendance Charts
-  const statusPieData = [
-    { name: 'Tepat Waktu', value: onTimeCount, color: '#10b981' },
-    { name: 'Terlambat', value: lateCount, color: '#f43f5e' },
-    { name: 'Cuti / Izin', value: approvedLeaves, color: '#f59e0b' },
-  ];
-
-  const leaveTypeBarData = [
-    { name: 'Cuti Tahunan', Permohonan: leaveRequests.filter((l) => l.type === 'CUTI').length },
-    { name: 'Sakit', Permohonan: leaveRequests.filter((l) => l.type === 'SAKIT').length },
-    { name: 'Tukar WFH', Permohonan: leaveRequests.filter((l) => l.type === 'TUKAR_HARI_WFH').length },
-    { name: 'Lembur', Permohonan: leaveRequests.filter((l) => l.type === 'LEMBUR').length },
-  ];
-
-  const approvedRatio = leaveRequests.length > 0 ? Math.round((leaveRequests.filter((l) => l.status === 'APPROVED').length / leaveRequests.length) * 100) : 100;
-  const pendingRatio = leaveRequests.length > 0 ? Math.round((leaveRequests.filter((l) => l.status === 'PENDING').length / leaveRequests.length) * 100) : 0;
-  const rejectedRatio = leaveRequests.length > 0 ? Math.round((leaveRequests.filter((l) => l.status === 'REJECTED').length / leaveRequests.length) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -224,14 +222,14 @@ export const AttendanceMonitoring: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/80">
-                  {filteredRecords.length === 0 ? (
+                  {paginatedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono">
                         Tidak ditemukan data absensi yang memenuhi kriteria filter.
                       </td>
                     </tr>
                   ) : (
-                    filteredRecords.map((record) => (
+                    paginatedRecords.map((record) => (
                       <tr key={record.id} className="hover:bg-zinc-800/40 transition-colors">
                         <td className="py-3 px-6 whitespace-nowrap">
                           <div className="w-14 h-12 rounded-lg overflow-hidden bg-[#09090b] border border-zinc-800 shrink-0">
@@ -314,6 +312,16 @@ export const AttendanceMonitoring: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Component */}
+            <Pagination
+              currentPage={currentPagePresensi}
+              totalPages={totalPagesPresensi}
+              totalItems={filteredRecords.length}
+              itemsPerPage={itemsPerPagePresensi}
+              onPageChange={setCurrentPagePresensi}
+              onItemsPerPageChange={setItemsPerPagePresensi}
+            />
           </div>
         </>
       ) : (
@@ -332,7 +340,7 @@ export const AttendanceMonitoring: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/80">
-                {leaveRequests.map((req) => (
+                {paginatedLeaveRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-zinc-800/40 transition-colors">
                     <td className="py-4 px-6 whitespace-nowrap">
                       <p className="font-bold text-zinc-100 text-sm whitespace-nowrap">{req.employeeName}</p>
@@ -393,6 +401,16 @@ export const AttendanceMonitoring: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Component for Leave Requests */}
+          <Pagination
+            currentPage={currentPageCuti}
+            totalPages={totalPagesCuti}
+            totalItems={leaveRequests.length}
+            itemsPerPage={itemsPerPageCuti}
+            onPageChange={setCurrentPageCuti}
+            onItemsPerPageChange={setItemsPerPageCuti}
+          />
         </div>
       )}
 

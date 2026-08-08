@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Employee, Department } from '../../types';
 import { EmployeeModal } from './EmployeeModal';
 import { DepartmentMasterManager } from './DepartmentMasterManager';
 import { PositionMasterManager } from './PositionMasterManager';
 import { BulkImportModal } from './BulkImportModal';
+import { Pagination } from '../common/Pagination';
 import {
   Users,
   UserPlus,
@@ -38,6 +39,15 @@ export const EmployeeMasterData: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedDept, selectedStatus, selectedRole]);
+
   // Dynamic department list from Master Data + Employees
   const availableDepartments = Array.from(
     new Set([
@@ -65,6 +75,13 @@ export const EmployeeMasterData: React.FC = () => {
 
     return matchesSearch && matchesDept && matchesStatus && matchesRole;
   });
+
+  // Paginated employees calculation
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleOpenAddModal = () => {
     setEditingEmployee(null);
@@ -266,7 +283,7 @@ export const EmployeeMasterData: React.FC = () => {
             </div>
           </div>
 
-          {/* Employees Table */}
+          {/* Employees Table with Pagination */}
           <div className="bg-[#0c0c0e] border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
             <div className="overflow-x-auto no-scrollbar">
               <table className="min-w-[850px] w-full text-left text-xs">
@@ -281,14 +298,14 @@ export const EmployeeMasterData: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60 font-sans">
-                  {filteredEmployees.length === 0 ? (
+                  {paginatedEmployees.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 font-mono">
                         Tidak ada data karyawan yang cocok dengan pencarian / filter.
                       </td>
                     </tr>
                   ) : (
-                    filteredEmployees.map((emp) => (
+                    paginatedEmployees.map((emp) => (
                       <tr key={emp.id} className="hover:bg-zinc-800/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -370,6 +387,16 @@ export const EmployeeMasterData: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Reusable Pagination Component */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredEmployees.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+            />
           </div>
         </div>
       )}
