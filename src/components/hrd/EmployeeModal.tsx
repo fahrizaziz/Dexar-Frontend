@@ -11,6 +11,14 @@ interface EmployeeModalProps {
   initialData?: Employee | null;
 }
 
+// Helper to auto-format Indonesian phone numbers into 0812-3456-7890 standard
+const formatIndonesianPhone = (val: string): string => {
+  const digits = val.replace(/\D/g, '');
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 13)}`;
+};
+
 export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   isOpen,
   onClose,
@@ -73,7 +81,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setNip(initialData.nip);
       setFullName(initialData.fullName);
       setEmail(initialData.email);
-      setPhone(initialData.phone);
+      setPhone(formatIndonesianPhone(initialData.phone));
       setDepartment(initialData.department || '');
       setPosition(initialData.position);
       setRole(initialData.role || 'KARYAWAN');
@@ -87,7 +95,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       setNip(`EMP-2026-${nextSeq}`);
       setFullName('');
       setEmail('');
-      setPhone('0812-');
+      setPhone('');
       setDepartment(''); // Default to empty string for '-- Pilih Departemen --'
       setPosition('');
       setRole(''); // Default to empty string for '-- Pilih Role / Hak Akses --'
@@ -178,9 +186,10 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
               type="text"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0812-xxxx-xxxx"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none"
+              onChange={(e) => setPhone(formatIndonesianPhone(e.target.value))}
+              placeholder="0812-3456-7890"
+              maxLength={15}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
           </div>
 
