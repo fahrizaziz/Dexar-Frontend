@@ -45,6 +45,29 @@ export const PersonalAttendanceHistory: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Pengumuman Perusahaan & Info HRD (Fitur #11) */}
+      <div className="bg-[#121215] border border-zinc-800/90 rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Pengumuman HRD Blast
+                </span>
+                <span className="text-[10px] text-zinc-500 font-mono">Agustus 2026</span>
+              </div>
+              <h3 className="text-sm font-bold text-zinc-100 mt-0.5">Kebijakan Presensi WFH & Ketentuan Hari Kerja Fleksibel</h3>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Pastikan melakukan Clock-Out sebelum pukul 18:00 WIB dan mengisi ringkasan hasil kerja harian (*Work Summary*) sebelum menyelesaikan presensi.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
         <div>
           <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2 tracking-tight">
