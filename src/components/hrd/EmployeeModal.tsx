@@ -289,15 +289,23 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             </div>
           </div>
 
-          {/* WFH Allowance */}
+          {/* WFH Allowance (Clean leading zero handling) */}
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">Jatah WFH (Hari / Minggu)</label>
             <input
               type="number"
               min={0}
               max={5}
-              value={wfhAllowance}
-              onChange={(e) => setWfhAllowance(Number(e.target.value))}
+              value={wfhAllowance === 0 ? '' : wfhAllowance}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setWfhAllowance(0);
+                } else {
+                  const num = parseInt(val, 10);
+                  setWfhAllowance(isNaN(num) ? 0 : Math.min(5, Math.max(0, num)));
+                }
+              }}
               placeholder="0 (WFO / Wajib Kantor)"
               className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none font-mono text-xs"
             />
