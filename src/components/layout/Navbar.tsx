@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#0c0c0e]/95 backdrop-blur-md border-b border-zinc-800/90 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+        <div className="flex items-center justify-between h-20 gap-2">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-11 h-11 rounded-xl bg-[#121215] flex items-center justify-center text-emerald-400 shadow-inner border border-zinc-800">
@@ -93,25 +93,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                   WFH Portal
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 hidden sm:block">
+              <p className="text-xs text-zinc-400 hidden xl:block">
                 Sistem Absensi & Monitoring Karyawan
               </p>
             </div>
           </div>
 
           {/* Navigation Tabs (Desktop & Tablet) */}
-          <nav className="hidden md:flex items-center gap-1.5 bg-[#09090b] p-1.5 rounded-xl border border-zinc-800 max-w-full overflow-x-auto no-scrollbar">
+          <nav className="hidden md:flex items-center gap-1 bg-[#09090b] p-1 rounded-xl border border-zinc-800 max-w-full overflow-x-auto no-scrollbar shrink">
             {/* Employee Tabs */}
             {canClockIn && (
               <button
                 onClick={() => setActiveTab('ABSENSI_WFH')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'ABSENSI_WFH'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <CalendarCheck className="w-4 h-4" />
+                <CalendarCheck className="w-3.5 h-3.5" />
                 <span>Absen WFH</span>
               </button>
             )}
@@ -119,13 +119,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewHistory && (
               <button
                 onClick={() => setActiveTab('HISTORY_SAYA')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'HISTORY_SAYA'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <UserCheck className="w-4 h-4" />
+                <UserCheck className="w-3.5 h-3.5" />
                 <span>History Saya</span>
               </button>
             )}
@@ -133,13 +133,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageLeave && (
               <button
                 onClick={() => setActiveTab('PENGAJUAN_CUTI')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'PENGAJUAN_CUTI'
                     ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/10 font-bold border border-emerald-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <CalendarDays className="w-4 h-4 text-emerald-400" />
+                <CalendarDays className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Cuti & WFH</span>
               </button>
             )}
@@ -151,13 +151,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewMonitoring && (
               <button
                 onClick={() => setActiveTab('MONITORING_HRD')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'MONITORING_HRD'
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <Shield className="w-4 h-4 text-indigo-400" />
+                <Shield className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Monitoring</span>
               </button>
             )}
@@ -165,13 +165,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageEmployees && (
               <button
                 onClick={() => setActiveTab('MASTER_KARYAWAN')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'MASTER_KARYAWAN'
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <Users className="w-4 h-4 text-indigo-400" />
+                <Users className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Master Data</span>
               </button>
             )}
@@ -179,13 +179,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewPayroll && (
               <button
                 onClick={() => setActiveTab('REKAP_PAYROLL')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'REKAP_PAYROLL'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 font-bold border border-purple-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <FileSpreadsheet className="w-4 h-4 text-purple-400" />
+                <FileSpreadsheet className="w-3.5 h-3.5 text-purple-400" />
                 <span>Payroll</span>
               </button>
             )}
@@ -193,13 +193,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageGeofence && (
               <button
                 onClick={() => setActiveTab('GEOFENCE_SHIFT')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'GEOFENCE_SHIFT'
                     ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/20 font-bold border border-cyan-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <MapPin className="w-4 h-4 text-cyan-400" />
+                <MapPin className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Geofence & Shift</span>
               </button>
             )}
@@ -207,13 +207,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canViewAuditLogs && (
               <button
                 onClick={() => setActiveTab('AUDIT_LOGS')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'AUDIT_LOGS'
                     ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20 font-bold border border-amber-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <Activity className="w-4 h-4 text-amber-400" />
+                <Activity className="w-3.5 h-3.5 text-amber-400" />
                 <span>Audit Trail</span>
               </button>
             )}
@@ -221,13 +221,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {canManageMenuAccess && (
               <button
                 onClick={() => setActiveTab('KONFIGURASI_AKSES')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg font-medium text-xs transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeTab === 'KONFIGURASI_AKSES'
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold border border-indigo-400/40'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                 }`}
               >
-                <Sliders className="w-4 h-4 text-indigo-400" />
+                <Sliders className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Akses Menu</span>
               </button>
             )}
@@ -236,7 +236,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Controls: Real-time clock & User profile */}
           <div className="flex items-center gap-3 shrink-0">
             {/* Live Clock */}
-            <div className="hidden lg:flex flex-col items-end text-right px-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800">
+            <div className="hidden xl:flex flex-col items-end text-right px-3 py-1.5 rounded-xl bg-[#09090b] border border-zinc-800">
               <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400">
                 <Clock className="w-3.5 h-3.5 animate-pulse" />
                 <span>{formatTimeWIB(currentTime)}</span>

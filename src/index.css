@@ -28,6 +28,15 @@
   background: #3f3f46;
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 /* Geometric balance background pattern */
 .bg-geometric-grid {
   background-size: 32px 32px;
