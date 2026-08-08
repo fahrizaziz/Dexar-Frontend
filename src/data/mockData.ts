@@ -287,6 +287,8 @@ export const INITIAL_GEOFENCE_CONFIG = {
   workStartTime: '08:30',
   workEndTime: '17:30',
   lateToleranceMinutes: 15,
+  wfhIncentivePerDay: 0,
+  lateDeductionPerOccurrence: 0,
 };
 
 export const INITIAL_WORK_SHIFTS = [
