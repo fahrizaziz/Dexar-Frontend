@@ -68,7 +68,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserSession>(() => {
-    const saved = localStorage.getItem('wfh_current_user_v1');
+    const saved = localStorage.getItem('wfh_current_user_v2');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
 
   const [rolePermissions, setRolePermissions] = useState<Record<Role, Permission[]>>(() => {
-    const saved = localStorage.getItem('wfh_role_permissions_v1');
+    const saved = localStorage.getItem('wfh_role_permissions_v2');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -117,11 +117,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('wfh_current_user_v1', JSON.stringify(currentUser));
+    localStorage.setItem('wfh_current_user_v2', JSON.stringify(currentUser));
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('wfh_role_permissions_v1', JSON.stringify(rolePermissions));
+    localStorage.setItem('wfh_role_permissions_v2', JSON.stringify(rolePermissions));
   }, [rolePermissions]);
 
   const loginWithApi = async (email: string, pass: string): Promise<UserSession> => {
