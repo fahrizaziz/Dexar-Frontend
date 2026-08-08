@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
@@ -21,6 +21,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
   const isAuthenticated = authService.isAuthenticated();
 
+  // Reset form fields when modal opens (e.g. after logout)
+  useEffect(() => {
+    if (isOpen) {
+      setIdentifier('');
+      setPassword('');
+      setShowPassword(false);
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -33,6 +44,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       setTimeout(() => {
         setSuccessMsg('');
         setIsSubmitting(false);
+        setIdentifier('');
+        setPassword('');
         onClose();
       }, 600);
     } catch (err: any) {
