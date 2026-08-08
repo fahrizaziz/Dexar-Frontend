@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee, AttendanceRecord, LeaveRequest, DepartmentMaster, PositionMaster, AuditLog, GeofenceConfig, WorkShift, HolidayCalendar } from '../types';
 import { storageService } from '../services/storageService';
+import { auditService } from '../services/auditService';
 
 export interface ToastMessage {
   id: string;
@@ -205,6 +206,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addAuditLog = (log: Omit<AuditLog, 'id' | 'timestamp'>) => {
     storageService.addAuditLog(log);
     setAuditLogs(storageService.getAuditLogs());
+    auditService.logAction(log).catch(() => {});
   };
 
   const updateGeofenceConfig = (config: GeofenceConfig) => {
