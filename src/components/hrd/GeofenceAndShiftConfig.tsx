@@ -42,10 +42,10 @@ export const GeofenceAndShiftConfig: React.FC = () => {
     geofenceConfig.lateToleranceMinutes.toString()
   );
   const [wfhIncentivePerDay, setWfhIncentivePerDay] = useState(
-    (geofenceConfig.wfhIncentivePerDay ?? 0).toString()
+    (geofenceConfig.wfhIncentivePerDay || 50000).toString()
   );
   const [lateDeductionPerOccurrence, setLateDeductionPerOccurrence] = useState(
-    (geofenceConfig.lateDeductionPerOccurrence ?? 0).toString()
+    (geofenceConfig.lateDeductionPerOccurrence || 25000).toString()
   );
 
   // New Holiday Form

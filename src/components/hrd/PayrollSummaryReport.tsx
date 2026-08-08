@@ -52,15 +52,15 @@ export const PayrollSummaryReport: React.FC = () => {
 
   // State for Rate Configuration Modal
   const [isRatesModalOpen, setIsRatesModalOpen] = useState(false);
-  const [editWfhRate, setEditWfhRate] = useState<string>((geofenceConfig.wfhIncentivePerDay ?? 0).toString());
-  const [editLateRate, setEditLateRate] = useState<string>((geofenceConfig.lateDeductionPerOccurrence ?? 0).toString());
+  const [editWfhRate, setEditWfhRate] = useState<string>((geofenceConfig.wfhIncentivePerDay || 50000).toString());
+  const [editLateRate, setEditLateRate] = useState<string>((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
 
-  const wfhRate = geofenceConfig.wfhIncentivePerDay ?? 0;
-  const lateRate = geofenceConfig.lateDeductionPerOccurrence ?? 0;
+  const wfhRate = geofenceConfig.wfhIncentivePerDay || 50000;
+  const lateRate = geofenceConfig.lateDeductionPerOccurrence || 25000;
 
   useEffect(() => {
-    setEditWfhRate((geofenceConfig.wfhIncentivePerDay ?? 0).toString());
-    setEditLateRate((geofenceConfig.lateDeductionPerOccurrence ?? 0).toString());
+    setEditWfhRate((geofenceConfig.wfhIncentivePerDay || 50000).toString());
+    setEditLateRate((geofenceConfig.lateDeductionPerOccurrence || 25000).toString());
   }, [geofenceConfig]);
 
   const handleSaveRates = (e: React.FormEvent) => {
