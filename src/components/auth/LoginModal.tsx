@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
-import { Lock, Mail, ArrowRight, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -124,10 +124,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 <span>Memproses Login...</span>
               </>
             ) : (
-              <>
-                <span>Login</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
+              <span>Login</span>
             )}
           </button>
         </form>
