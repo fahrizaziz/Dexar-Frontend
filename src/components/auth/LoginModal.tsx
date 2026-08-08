@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
-import { Lock, Mail, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Lock, UserCheck, CheckCircle2, Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface LoginModalProps {
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const { loginWithApi } = useAuth();
 
-  const [identifier, setIdentifier] = useState('');
+  const [nip, setNip] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +24,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   // Reset form fields when modal opens (e.g. after logout)
   useEffect(() => {
     if (isOpen) {
-      setIdentifier('');
+      setNip('');
       setPassword('');
       setShowPassword(false);
       setErrorMsg('');
@@ -39,18 +39,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      const user = await loginWithApi(identifier.trim(), password);
+      const user = await loginWithApi(nip.trim(), password);
       setSuccessMsg(`Berhasil masuk sebagai ${user.name} (${user.role})`);
       setTimeout(() => {
         setSuccessMsg('');
         setIsSubmitting(false);
-        setIdentifier('');
+        setNip('');
         setPassword('');
         onClose();
       }, 600);
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMsg(err.message || 'Login gagal. Pastikan email dan password benar.');
+      setErrorMsg(err.message || 'Login gagal. Pastikan NIP dan password benar.');
     }
   };
 
@@ -59,7 +59,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Masuk ke Portal Absensi WFH"
-      subtitle="Masukkan Email dan Password Anda untuk mengakses sistem"
+      subtitle="Masukkan Nomor Induk Pegawai (NIP) dan Password Anda untuk mengakses sistem"
       maxWidth="md"
       closeOnOverlayClick={false}
       hideCloseButton={!isAuthenticated}
@@ -78,21 +78,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* Single Unified Login Form */}
+        {/* Single Unified NIP Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              Email Pengguna *
+              Nomor Induk Pegawai (NIP) *
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+              <UserCheck className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
               <input
-                type="email"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Contoh: budi.santoso@company.co.id"
+                type="text"
+                value={nip}
+                onChange={(e) => setNip(e.target.value)}
+                placeholder="Contoh: EMP-2026-001 (Karyawan) atau EMP-2026-002 (Admin HRD)"
                 required
-                className="w-full bg-[#09090b] border border-zinc-800 focus:border-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 outline-none transition-colors"
+                className="w-full bg-[#09090b] border border-zinc-800 focus:border-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 outline-none transition-colors font-mono"
               />
             </div>
           </div>
