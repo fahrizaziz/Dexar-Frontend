@@ -61,20 +61,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = () => {
+  const loadData = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setEmployees(storageService.getEmployees());
-      setDepartments(storageService.getDepartments());
-      setPositions(storageService.getPositions());
-      setAttendanceRecords(storageService.getAttendanceRecords());
-      setLeaveRequests(storageService.getLeaveRequests());
-      setAuditLogs(storageService.getAuditLogs());
-      setGeofenceConfig(storageService.getGeofenceConfig());
-      setWorkShifts(storageService.getWorkShifts());
-      setHolidays(storageService.getHolidays());
-      setIsLoading(false);
-    }, 200);
+
+    // Ambil data lokal terlebih dahulu sebagai fallback cepat
+    setEmployees(storageService.getEmployees());
+    setDepartments(storageService.getDepartments());
+    setPositions(storageService.getPositions());
+    setAttendanceRecords(storageService.getAttendanceRecords());
+    setLeaveRequests(storageService.getLeaveRequests());
+    setAuditLogs(storageService.getAuditLogs());
+    setGeofenceConfig(storageService.getGeofenceConfig());
+    setWorkShifts(storageService.getWorkShifts());
+    setHolidays(storageService.getHolidays());
+
+    // Ambil data resmi realtime dari API NestJS & Database MySQL
+    try {
+      const apiEmps = await employeeService.getAllEmployees();
+      if (Array.isArray(apiEmps) && apiEmps.length > 0) {
+        setEmployees(apiEmps);
+        storageService.saveEmployees(apiEmps);
+      }
+    } catch {
+      // Backend offline fallback
+    }
+
+    try {
+      const apiDepts = await employeeService.getAllDepartments();
+      if (Array.isArray(apiDepts) && apiDepts.length > 0) {
+        setDepartments(apiDepts);
+        storageService.saveDepartments(apiDepts);
+      }
+    } catch {
+      // Backend offline fallback
+    }
+
+    try {
+      const apiPositions = await employeeService.getAllPositions();
+      if (Array.isArray(apiPositions) && apiPositions.length > 0) {
+        setPositions(apiPositions);
+        storageService.savePositions(apiPositions);
+      }
+    } catch {
+      // Backend offline fallback
+    }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
