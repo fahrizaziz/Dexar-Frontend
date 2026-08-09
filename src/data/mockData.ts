@@ -36,13 +36,13 @@ export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [];
 export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
 
 export const INITIAL_GEOFENCE_CONFIG = {
-  officeName: 'Kantor Pusat HQ Jakarta (South Quarter)',
-  latitude: -6.2915,
-  longitude: 106.7932,
-  radiusMeters: 150,
-  workStartTime: '08:30',
-  workEndTime: '17:30',
-  lateToleranceMinutes: 15,
+  officeName: '',
+  latitude: 0,
+  longitude: 0,
+  radiusMeters: 0,
+  workStartTime: '',
+  workEndTime: '',
+  lateToleranceMinutes: 0,
   wfhIncentivePerDay: 0,
   lateDeductionPerOccurrence: 0,
 };

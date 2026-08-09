@@ -32,15 +32,13 @@ export const GeofenceAndShiftConfig: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'GEOFENCE' | 'SHIFTS' | 'HOLIDAYS'>('GEOFENCE');
 
   // Geofence form state
-  const [officeName, setOfficeName] = useState(geofenceConfig.officeName);
-  const [latitude, setLatitude] = useState(geofenceConfig.latitude.toString());
-  const [longitude, setLongitude] = useState(geofenceConfig.longitude.toString());
-  const [radiusMeters, setRadiusMeters] = useState(geofenceConfig.radiusMeters.toString());
-  const [workStartTime, setWorkStartTime] = useState(geofenceConfig.workStartTime);
-  const [workEndTime, setWorkEndTime] = useState(geofenceConfig.workEndTime);
-  const [lateToleranceMinutes, setLateToleranceMinutes] = useState(
-    geofenceConfig.lateToleranceMinutes.toString()
-  );
+  const [officeName, setOfficeName] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [radiusMeters, setRadiusMeters] = useState('');
+  const [workStartTime, setWorkStartTime] = useState('');
+  const [workEndTime, setWorkEndTime] = useState('');
+  const [lateToleranceMinutes, setLateToleranceMinutes] = useState('');
   const [wfhIncentivePerDay, setWfhIncentivePerDay] = useState(
     (geofenceConfig.wfhIncentivePerDay || 50000).toString()
   );
@@ -224,6 +222,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                   type="text"
                   value={officeName}
                   onChange={(e) => setOfficeName(e.target.value)}
+                  placeholder="Kantor Pusat HQ Jakarta (South Quarter)"
                   className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl p-3 outline-none focus:border-cyan-500"
                 />
               </div>
@@ -235,6 +234,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="text"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="-6.2915"
                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -244,6 +244,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="text"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="106.7932"
                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -253,6 +254,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="number"
                     value={radiusMeters}
                     onChange={(e) => setRadiusMeters(e.target.value)}
+                    placeholder="150"
                     className="w-full bg-zinc-900 border border-zinc-800 text-cyan-400 font-mono font-bold rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -265,6 +267,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="time"
                     value={workStartTime}
                     onChange={(e) => setWorkStartTime(e.target.value)}
+                    placeholder="08:30"
                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -274,6 +277,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="time"
                     value={workEndTime}
                     onChange={(e) => setWorkEndTime(e.target.value)}
+                    placeholder="17:30"
                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -283,6 +287,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                     type="number"
                     value={lateToleranceMinutes}
                     onChange={(e) => setLateToleranceMinutes(e.target.value)}
+                    placeholder="15"
                     className="w-full bg-zinc-900 border border-zinc-800 text-amber-400 font-mono font-bold rounded-xl p-3 outline-none focus:border-cyan-500"
                   />
                 </div>
