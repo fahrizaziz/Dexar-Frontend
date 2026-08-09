@@ -35,18 +35,7 @@ export const INITIAL_ATTENDANCE_RECORDS: AttendanceRecord[] = [];
 
 export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [];
 
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: 'log-001',
-    actorNip: 'EMP-2026-001',
-    actorName: 'Siti Rahmawati',
-    actorRole: 'HRD_ADMIN',
-    action: 'SYSTEM_INITIALIZATION',
-    category: 'SYSTEM',
-    details: 'Pembersihan database sistem & inisialisasi akun tunggal Admin HRD Utama (Siti Rahmawati).',
-    timestamp: new Date().toISOString(),
-  },
-];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
 
 export const INITIAL_GEOFENCE_CONFIG = {
   officeName: 'Kantor Pusat HQ Jakarta (South Quarter)',
