@@ -271,9 +271,10 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                   <td className="px-5 py-4 text-amber-400 font-bold">
                     {geofenceConfig.lateToleranceMinutes || 15} Menit
                   </td>
-                  <td className="px-5 py-4 text-center font-sans">
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      KANTOR UTAMA (AKTIF)
+                  <td className="px-5 py-4 text-center font-sans whitespace-nowrap">
+                    <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap inline-flex items-center gap-1.5 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span>KANTOR UTAMA (AKTIF)</span>
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right font-sans">
