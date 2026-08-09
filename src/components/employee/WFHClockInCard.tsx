@@ -26,6 +26,8 @@ import {
   Loader2,
   XCircle,
   ExternalLink,
+  Home,
+  Building2,
 } from 'lucide-react';
 
 interface FeedbackModalState {
@@ -49,6 +51,7 @@ export const WFHClockInCard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form submission states
+  const [workMode, setWorkMode] = useState<'WFH' | 'WFO'>('WFH');
   const [photoProofUrl, setPhotoProofUrl] = useState<string | null>(null);
   const [location, setLocation] = useState<LocationData | null>(null);
 
@@ -426,11 +429,13 @@ export const WFHClockInCard: React.FC = () => {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-zinc-100">Form Presensi WFH (Work From Home)</h2>
+              <h2 className="text-lg font-extrabold text-zinc-100">
+                {workMode === 'WFH' ? 'Form Presensi WFH (Work From Home)' : 'Form Presensi WFO (Work From Office)'}
+              </h2>
               <p className="text-xs text-zinc-400">
                 {todayRecord
                   ? 'Anda telah melakukan Absen Masuk. Isi rekap hasil kerja di bawah untuk Absen Pulang.'
-                  : 'Ambil snapshot foto webcam dan tuliskan jurnal kerja harian Anda untuk mengaktifkan absen'}
+                  : 'Pilih mode kerja hari ini, ambil snapshot foto webcam, dan tuliskan rencana kerja Anda'}
               </p>
             </div>
           </div>
@@ -452,6 +457,40 @@ export const WFHClockInCard: React.FC = () => {
         {!todayRecord ? (
           /* SECTION 1: CLOCK IN FORM */
           <form onSubmit={handleClockIn} className="space-y-6">
+            {/* Proven Dual-Mode Toggle: WFH vs WFO */}
+            <div className="bg-[#09090b] border border-zinc-800 p-3.5 rounded-2xl space-y-2">
+              <label className="block text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                📌 PILIH MODE KERJA HARI INI *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWorkMode('WFH')}
+                  className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    workMode === 'WFH'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500 shadow-lg shadow-emerald-500/10'
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                  }`}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>🏡 Work From Home (WFH)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setWorkMode('WFO')}
+                  className={`py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    workMode === 'WFO'
+                      ? 'bg-indigo-500/20 text-indigo-400 border-2 border-indigo-500 shadow-lg shadow-indigo-500/10'
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>🏢 Work From Office (WFO)</span>
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Photo Proof Webcam Box */}
               <div className="space-y-3">
@@ -584,7 +623,7 @@ export const WFHClockInCard: React.FC = () => {
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>KIRIM ABSEN MASUK WFH</span>
+                  <span>{workMode === 'WFH' ? 'KIRIM ABSEN MASUK WFH' : 'KIRIM ABSEN MASUK WFO (KANTOR)'}</span>
                 </>
               )}
             </button>
