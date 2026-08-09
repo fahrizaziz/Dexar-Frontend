@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { Employee, AttendanceRecord, LeaveRequest, DepartmentMaster, PositionMaster, AuditLog, GeofenceConfig, WorkShift, HolidayCalendar } from '../types';
 import { storageService } from '../services/storageService';
 import { auditService } from '../services/auditService';
@@ -50,6 +51,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser } = useAuth();
+  
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<DepartmentMaster[]>([]);
   const [positions, setPositions] = useState<PositionMaster[]>([]);
@@ -75,9 +78,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         auditService.getAuditLogs().catch(() => []),
       ]);
 
-      setEmployees(apiEmps.length > 0 ? apiEmps : storageService.getEmployees());
-      setDepartments(apiDepts.length > 0 ? apiDepts : storageService.getDepartments());
-      setPositions(apiPositions.length > 0 ? apiPositions : storageService.getPositions());
+      setEmployees(apiEmps);
+      setDepartments(apiDepts);
+      setPositions(apiPositions);
       if (apiGeo) {
         setGeofenceConfig(apiGeo);
       }
@@ -92,8 +95,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentUser) {
+      loadData();
+    }
+  }, [currentUser]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = `toast-${Date.now()}`;
@@ -107,152 +112,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const addEmployee = (emp: Omit<Employee, 'id'>): Employee => {
-    const tempId = `emp-${Date.now()}`;
-    const newEmpObj: Employee = { ...emp, id: tempId };
-
-    // Update state React secara instan
-    setEmployees((prev) => [...prev, newEmpObj]);
-    showToast(`Karyawan baru ${emp.fullName} berhasil ditambahkan!`, 'success');
-
-    // Kirim request murni ke API backend NestJS & MySQL
-    employeeService.createEmployee({
-      nip: emp.nip,
-      fullName: emp.fullName,
-      email: emp.email,
-      phone: emp.phone,
-      department: emp.department,
-      position: emp.position,
-      role: emp.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
-      status: emp.status === 'AKTIF' ? 'ACTIVE' : 'INACTIVE',
-      wfhAllowanceDaysPerWeek: emp.wfhAllowanceDaysPerWeek,
-      salary: emp.salary,
-      avatarUrl: emp.avatarUrl,
-    }).then((created) => {
-      if (created) {
-        // Sync ulang data murni dari API
-        employeeService.getAllEmployees().then((fresh) => {
-          if (Array.isArray(fresh) && fresh.length > 0) setEmployees(fresh);
-        });
-      }
-    }).catch((err) => {
-      console.warn('Backend API createEmployee error:', err);
-    });
-
-    return newEmpObj;
+  const addEmployee = (emp: Employee) => {
+    setEmployees((prev) => [...prev, emp]);
   };
 
   const updateEmployee = (id: string, fields: Partial<Employee>) => {
     setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...fields } : e)));
-    showToast(`Data karyawan berhasil diperbarui.`, 'info');
-
-    // Kirim request murni ke API backend NestJS & MySQL
-    employeeService.updateEmployee(id, {
-      fullName: fields.fullName,
-      email: fields.email,
-      phone: fields.phone,
-      department: fields.department,
-      position: fields.position,
-      role: fields.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
-      wfhAllowanceDaysPerWeek: fields.wfhAllowanceDaysPerWeek,
-      salary: fields.salary,
-    }).then(() => {
-      employeeService.getAllEmployees().then((fresh) => {
-        if (Array.isArray(fresh) && fresh.length > 0) setEmployees(fresh);
-      });
-    }).catch((err) => {
-      console.warn('Backend API updateEmployee error:', err);
-    });
   };
 
   const deleteEmployee = (id: string) => {
     setEmployees((prev) => prev.filter((e) => e.id !== id));
-    showToast(`Data karyawan telah dihapus dari sistem.`, 'info');
-
-    // Kirim request murni ke API backend NestJS & MySQL
-    employeeService.deleteEmployee(id).then(() => {
-      employeeService.getAllEmployees().then((fresh) => {
-        if (Array.isArray(fresh)) setEmployees(fresh);
-      });
-    }).catch((err) => {
-      console.warn('Backend API deleteEmployee error:', err);
-    });
   };
 
   // Department Handlers
-  const addDepartment = (dept: Omit<DepartmentMaster, 'id'>): DepartmentMaster => {
-    const created = storageService.addDepartment(dept);
-    setDepartments(storageService.getDepartments());
-    showToast(`Departemen Baru '${created.name}' (${created.code}) berhasil ditambahkan!`, 'success');
-
-    // API Call ke NestJS
-    employeeService.createDepartment(dept).catch((err) => {
-      console.warn('Backend API createDepartment error/offline:', err);
-    });
-
-    return created;
+  const addDepartment = (dept: DepartmentMaster) => {
+    setDepartments((prev) => [...prev, dept]);
   };
 
   const updateDepartment = (id: string, fields: Partial<DepartmentMaster>) => {
-    const updated = storageService.updateDepartment(id, fields);
-    if (updated) {
-      setDepartments(storageService.getDepartments());
-      showToast(`Master Departemen '${updated.name}' diperbarui.`, 'info');
-
-      // API Call ke NestJS
-      employeeService.updateDepartment(id, fields).catch((err) => {
-        console.warn('Backend API updateDepartment error/offline:', err);
-      });
-    }
+    setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, ...fields } : d)));
   };
 
   const deleteDepartment = (id: string) => {
-    storageService.deleteDepartment(id);
-    setDepartments(storageService.getDepartments());
-    showToast(`Master Departemen berhasil dihapus.`, 'info');
-
-    // API Call ke NestJS
-    employeeService.deleteDepartment(id).catch((err) => {
-      console.warn('Backend API deleteDepartment error/offline:', err);
-    });
+    setDepartments((prev) => prev.filter((d) => d.id !== id));
   };
 
   // Position Handlers
-  const addPosition = (pos: Omit<PositionMaster, 'id'>): PositionMaster => {
-    const created = storageService.addPosition(pos);
-    setPositions(storageService.getPositions());
-    showToast(`Jabatan Baru '${created.name}' (${created.code}) berhasil ditambahkan!`, 'success');
-
-    // API Call ke NestJS
-    employeeService.createPosition(pos).catch((err) => {
-      console.warn('Backend API createPosition error/offline:', err);
-    });
-
-    return created;
+  const addPosition = (pos: PositionMaster) => {
+    setPositions((prev) => [...prev, pos]);
   };
 
   const updatePosition = (id: string, fields: Partial<PositionMaster>) => {
-    const updated = storageService.updatePosition(id, fields);
-    if (updated) {
-      setPositions(storageService.getPositions());
-      showToast(`Master Jabatan '${updated.name}' diperbarui.`, 'info');
-
-      // API Call ke NestJS
-      employeeService.updatePosition(id, fields).catch((err) => {
-        console.warn('Backend API updatePosition error/offline:', err);
-      });
-    }
+    setPositions((prev) => prev.map((p) => (p.id === id ? { ...p, ...fields } : p)));
   };
 
   const deletePosition = (id: string) => {
-    storageService.deletePosition(id);
-    setPositions(storageService.getPositions());
-    showToast(`Master Jabatan berhasil dihapus.`, 'info');
-
-    // API Call ke NestJS
-    employeeService.deletePosition(id).catch((err) => {
-      console.warn('Backend API deletePosition error/offline:', err);
-    });
+    setPositions((prev) => prev.filter((p) => p.id !== id));
   };
 
   const submitAttendance = (record: Omit<AttendanceRecord, 'id' | 'createdAt'>): AttendanceRecord => {

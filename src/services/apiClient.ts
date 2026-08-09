@@ -48,8 +48,11 @@ export async function apiRequest<T = any>(
 
     if (!response.ok) {
       if (response.status === 401) {
-        // Clear token if unauthorized / session expired
+        const wasLoggedIn = !!tokenStorage.getToken();
         tokenStorage.removeToken();
+        if (wasLoggedIn) {
+          window.location.href = '/'; // redirect to login
+        }
       }
       throw new Error(data.message || `HTTP Error ${response.status}`);
     }

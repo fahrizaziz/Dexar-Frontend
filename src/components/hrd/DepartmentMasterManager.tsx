@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { DepartmentMaster } from '../../types';
 import { Modal } from '../common/Modal';
 import { employeeService } from '../../services/employeeService';
 import { Building2, Plus, Edit3, Trash2, Users, Search, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 export const DepartmentMasterManager: React.FC = () => {
-  const { departments: localDepts, employees, addDepartment, updateDepartment, deleteDepartment, showToast } = useApp();
+  const { departments: localDepts, employees, addDepartment, updateDepartment, deleteDepartment, showToast, addAuditLog } = useApp();
+  const { currentUser } = useAuth();
   const [apiDepts, setApiDepts] = useState<DepartmentMaster[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +87,14 @@ export const DepartmentMasterManager: React.FC = () => {
         updateDepartment(editingDept.id, updated);
         setApiDepts((prev) => prev.map((d) => (d.id === editingDept.id ? { ...d, ...updated } : d)));
         showToast(`Departemen ${updated.name} berhasil diperbarui!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'UPDATE',
+          target: `Master Departemen: ${updated.code}`,
+          details: `Memperbarui data departemen ${updated.name}`,
+          category: 'DATA_MASTER',
+        });
       } else {
         const created = await employeeService.createDepartment({
           code: code.trim(),
@@ -97,26 +107,17 @@ export const DepartmentMasterManager: React.FC = () => {
         addDepartment(created);
         setApiDepts((prev) => [...prev, created]);
         showToast(`Departemen ${created.name} (${created.code}) berhasil ditambahkan!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'CREATE',
+          target: `Master Departemen: ${created.code}`,
+          details: `Menambahkan departemen baru ${created.name}`,
+          category: 'DATA_MASTER',
+        });
       }
     } catch (err: any) {
-      if (editingDept) {
-        updateDepartment(editingDept.id, {
-          code: code.trim(),
-          name: name.trim(),
-          headOfDepartment: headOfDepartment.trim(),
-          description: description.trim(),
-          status,
-        });
-      } else {
-        addDepartment({
-          code: code.trim(),
-          name: name.trim(),
-          headOfDepartment: headOfDepartment.trim(),
-          description: description.trim(),
-          status,
-        });
-      }
-      showToast(`Master Departemen berhasil disimpan!`, 'success');
+      showToast(`Gagal menyimpan departemen: ${err.message}`, 'error');
     } finally {
       setIsModalOpen(false);
     }
@@ -135,9 +136,16 @@ export const DepartmentMasterManager: React.FC = () => {
         setApiDepts((prev) => prev.filter((d) => d.id !== dept.id));
         deleteDepartment(dept.id);
         showToast(`Departemen ${dept.name} telah dihapus.`, 'info');
-      } catch (err) {
-        deleteDepartment(dept.id);
-        showToast(`Departemen ${dept.name} telah dihapus.`, 'info');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'DELETE',
+          target: `Master Departemen: ${dept.code}`,
+          details: `Menghapus departemen ${dept.name}`,
+          category: 'DATA_MASTER',
+        });
+      } catch (err: any) {
+        showToast(`Gagal menghapus departemen: ${err.message}`, 'error');
       }
     }
   };

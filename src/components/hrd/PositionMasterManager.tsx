@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { PositionMaster } from '../../types';
 import { Modal } from '../common/Modal';
 import { employeeService } from '../../services/employeeService';
 import { Briefcase, Plus, Edit3, Trash2, Search, CheckCircle2, XCircle, Building2, Shield, Loader2 } from 'lucide-react';
 
 export const PositionMasterManager: React.FC = () => {
-  const { positions: localPositions, departments, employees, addPosition, updatePosition, deletePosition, showToast } = useApp();
+  const { positions: localPositions, departments, employees, addPosition, updatePosition, deletePosition, showToast, addAuditLog } = useApp();
+  const { currentUser } = useAuth();
   const [apiPositions, setApiPositions] = useState<PositionMaster[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +91,14 @@ export const PositionMasterManager: React.FC = () => {
         updatePosition(editingPos.id, updated);
         setApiPositions((prev) => prev.map((p) => (p.id === editingPos.id ? { ...p, ...updated } : p)));
         showToast(`Master Jabatan ${updated.name} berhasil diperbarui!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'UPDATE',
+          target: `Master Jabatan: ${updated.code}`,
+          details: `Memperbarui data jabatan ${updated.name}`,
+          category: 'DATA_MASTER',
+        });
       } else {
         const created = await employeeService.createPosition({
           code: code.trim(),
@@ -101,26 +111,17 @@ export const PositionMasterManager: React.FC = () => {
         addPosition(created);
         setApiPositions((prev) => [...prev, created]);
         showToast(`Master Jabatan ${created.name} (${created.code}) berhasil ditambahkan!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'CREATE',
+          target: `Master Jabatan: ${created.code}`,
+          details: `Menambahkan jabatan baru ${created.name}`,
+          category: 'DATA_MASTER',
+        });
       }
     } catch (err: any) {
-      if (editingPos) {
-        updatePosition(editingPos.id, {
-          code: code.trim(),
-          name: name.trim(),
-          departmentName,
-          level,
-          status,
-        });
-      } else {
-        addPosition({
-          code: code.trim(),
-          name: name.trim(),
-          departmentName,
-          level,
-          status,
-        });
-      }
-      showToast(`Master Jabatan berhasil disimpan!`, 'success');
+      showToast(`Gagal menyimpan jabatan: ${err.message}`, 'error');
     } finally {
       setIsModalOpen(false);
     }
@@ -139,9 +140,16 @@ export const PositionMasterManager: React.FC = () => {
         setApiPositions((prev) => prev.filter((p) => p.id !== pos.id));
         deletePosition(pos.id);
         showToast(`Master Jabatan ${pos.name} telah dihapus.`, 'info');
-      } catch (err) {
-        deletePosition(pos.id);
-        showToast(`Master Jabatan ${pos.name} telah dihapus.`, 'info');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'DELETE',
+          target: `Master Jabatan: ${pos.code}`,
+          details: `Menghapus jabatan ${pos.name}`,
+          category: 'DATA_MASTER',
+        });
+      } catch (err: any) {
+        showToast(`Gagal menghapus jabatan: ${err.message}`, 'error');
       }
     }
   };

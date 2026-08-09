@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { AttendanceRecord, LeaveRequest } from '../../types';
 import { AttendanceDetailModal } from './AttendanceDetailModal';
 import { AttendanceAnalyticsModal } from './AttendanceAnalyticsModal';
@@ -34,7 +35,14 @@ import {
 } from 'lucide-react';
 
 export const AttendanceMonitoring: React.FC = () => {
-  const { attendanceRecords, leaveRequests, updateLeaveStatus, showToast } = useApp();
+  const { currentUser } = useAuth();
+  const {
+    attendanceRecords,
+    leaveRequests,
+    updateLeaveStatus,
+    showToast,
+    addAuditLog,
+  } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
@@ -145,6 +153,14 @@ export const AttendanceMonitoring: React.FC = () => {
         }!`,
         newStatus === 'APPROVED' ? 'success' : 'info'
       );
+      
+      addAuditLog({
+        actor: currentUser?.name || 'HRD Admin',
+        action: 'UPDATE',
+        target: `Permohonan Cuti/Izin: ${req.employeeName}`,
+        details: `Telah ${newStatus === 'APPROVED' ? 'MENYETUJUI' : 'MENOLAK'} permohonan izin/cuti`,
+        category: 'ATTENDANCE',
+      });
     } catch (err: any) {
       updateLeaveStatus(req.id, newStatus);
       showToast(

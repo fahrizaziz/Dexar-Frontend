@@ -33,30 +33,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
 }) => {
   const { departments: masterDepartments, positions: masterPositions, employees } = useApp();
 
-  const activeMasterDeptNames = Array.from(
-    new Set([
-      ...masterDepartments.filter((d) => d.status === 'AKTIF').map((d) => d.name),
-      'Engineering & Tech',
-      'Human Resources',
-      'Product & Design',
-      'Marketing & Sales',
-      'Finance & Accounting',
-      'Operations & Logistics',
-    ])
-  );
 
-  const activeMasterPositions = Array.from(
-    new Set([
-      ...masterPositions.filter((p) => p.status === 'AKTIF').map((p) => p.name),
-      'Senior Frontend Engineer',
-      'Backend Developer',
-      'Full Stack Engineer',
-      'Lead Product Manager',
-      'UI/UX Designer',
-      'HR Manager',
-      'Financial Analyst',
-    ])
-  );
 
   const targetData = initialData || employee;
 
@@ -72,6 +49,14 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
   const [avatarUrl, setAvatarUrl] = useState('');
   const [wfhAllowance, setWfhAllowance] = useState<number>(0);
   const [salary, setSalary] = useState<number | ''>('');
+
+  const activeMasterDeptNames = Array.from(
+    new Set(masterDepartments.filter((d) => d.status === 'AKTIF').map((d) => d.name))
+  );
+
+  const activeMasterPositions = Array.from(
+    new Set(masterPositions.filter((p) => p.status === 'AKTIF' && p.departmentName === department).map((p) => p.name))
+  );
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,7 +110,7 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
       fullName: fullName.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      department: (department || 'Engineering & Tech') as Department,
+      department: department as Department,
       position: position.trim(),
       role: (role || 'KARYAWAN') as Role,
       status,
@@ -222,7 +207,10 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
             <select
               required
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
+              onChange={(e) => {
+                setDepartment(e.target.value);
+                setPosition(''); // Reset posisi ketika departemen berubah
+              }}
               className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs cursor-pointer"
             >
               <option value="" disabled>-- Pilih Departemen / Divisi --</option>
@@ -235,40 +223,44 @@ export const EmployeeModal: React.FC<EmployeeModalProps> = ({
           </div>
 
           {/* Position */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-300">Jabatan / Posisi *</label>
-              <span className="text-[10px] text-slate-500 font-mono">Autofill Master Data</span>
+          {department && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-300">Jabatan / Posisi *</label>
+                <span className="text-[10px] text-slate-500 font-mono">Autofill Master Data</span>
+              </div>
+              <input
+                type="text"
+                required
+                list="master-positions-list"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="Pilih dari Master Data atau ketik posisi baru..."
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs"
+              />
+              <datalist id="master-positions-list">
+                {activeMasterPositions.map((pos) => (
+                  <option key={pos} value={pos} />
+                ))}
+              </datalist>
+              
+              {/* Quick Master Position Chips */}
+              {activeMasterPositions.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {activeMasterPositions.slice(0, 6).map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setPosition(chip)}
+                      className="text-[10px] bg-slate-900 hover:bg-indigo-950 text-slate-400 hover:text-indigo-300 border border-slate-800/80 hover:border-indigo-500/40 px-2 py-0.5 rounded-md transition-all cursor-pointer"
+                    >
+                      + {chip}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <input
-              type="text"
-              required
-              list="master-positions-list"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              placeholder="Pilih dari Master Data atau ketik posisi baru..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-slate-100 outline-none text-xs"
-            />
-            <datalist id="master-positions-list">
-              {activeMasterPositions.map((pos) => (
-                <option key={pos} value={pos} />
-              ))}
-            </datalist>
-            
-            {/* Quick Master Position Chips */}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {activeMasterPositions.slice(0, 6).map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setPosition(chip)}
-                  className="text-[10px] bg-slate-900 hover:bg-indigo-950 text-slate-400 hover:text-indigo-300 border border-slate-800/80 hover:border-indigo-500/40 px-2 py-0.5 rounded-md transition-all cursor-pointer"
-                >
-                  + {chip}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Gaji Pokok (Base Salary) */}
           <div>

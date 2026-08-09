@@ -40,7 +40,7 @@ interface FeedbackModalState {
 
 export const WFHClockInCard: React.FC = () => {
   const { currentUser } = useAuth();
-  const { attendanceRecords, addAttendanceRecord, updateAttendanceRecord, showToast } = useApp();
+  const { attendanceRecords, addAttendanceRecord, updateAttendanceRecord, addAuditLog, showToast } = useApp();
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [workPlan, setWorkPlan] = useState('');
@@ -180,6 +180,14 @@ export const WFHClockInCard: React.FC = () => {
       };
 
       addAttendanceRecord(fullRecord);
+      
+      addAuditLog({
+        actor: currentUser.name,
+        action: 'CREATE',
+        target: 'Absensi WFH (Clock In)',
+        details: `Melakukan absen masuk dengan lokasi terverifikasi`,
+        category: 'ATTENDANCE',
+      });
 
       // Reset form fields after success
       setPhotoProofUrl(null);
@@ -218,6 +226,14 @@ export const WFHClockInCard: React.FC = () => {
       });
 
       updateAttendanceRecord(todayRecord.id, updated);
+      
+      addAuditLog({
+        actor: currentUser.name,
+        action: 'UPDATE',
+        target: 'Absensi WFH (Clock Out)',
+        details: `Melakukan absen pulang dan menyerahkan laporan pekerjaan`,
+        category: 'ATTENDANCE',
+      });
 
       // Reset form fields after success
       setWorkSummary('');

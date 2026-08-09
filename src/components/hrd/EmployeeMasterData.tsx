@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { Employee } from '../../types';
 import { EmployeeModal } from './EmployeeModal';
 import { DepartmentMasterManager } from './DepartmentMasterManager';
@@ -30,7 +31,8 @@ import {
 } from 'lucide-react';
 
 export const EmployeeMasterData: React.FC = () => {
-  const { employees, departments, addEmployee, updateEmployee, deleteEmployee, showToast } = useApp();
+  const { employees, departments, addEmployee, updateEmployee, deleteEmployee, showToast, addAuditLog } = useApp();
+  const { currentUser } = useAuth();
 
   const [activeMasterTab, setActiveMasterTab] = useState<'EMPLOYEES' | 'DEPARTMENTS' | 'POSITIONS'>('EMPLOYEES');
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,6 +149,14 @@ export const EmployeeMasterData: React.FC = () => {
           prev.map((e) => (e.id === editingEmployee.id ? { ...e, ...updated } : e))
         );
         showToast(`Data karyawan ${updated.fullName} berhasil diperbarui!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'UPDATE',
+          target: `Master Karyawan: ${updated.nip}`,
+          details: `Memperbarui data karyawan ${updated.fullName}`,
+          category: 'DATA_MASTER',
+        });
       } else {
         const created = await employeeService.createEmployee({
           nip: data.nip,
@@ -164,14 +174,17 @@ export const EmployeeMasterData: React.FC = () => {
         addEmployee(created);
         setFetchedEmployees((prev) => [created, ...prev]);
         showToast(`Karyawan baru ${created.fullName} (${created.nip}) berhasil didaftarkan!`, 'success');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'CREATE',
+          target: `Master Karyawan: ${created.nip}`,
+          details: `Mendaftarkan karyawan baru ${created.fullName}`,
+          category: 'DATA_MASTER',
+        });
       }
     } catch (err: any) {
-      if (editingEmployee) {
-        updateEmployee(editingEmployee.id, data);
-      } else {
-        addEmployee(data);
-      }
-      showToast(`Data karyawan tersimpan!`, 'success');
+      showToast(`Gagal menyimpan karyawan: ${err.message}`, 'error');
     } finally {
       setIsModalOpen(false);
     }
@@ -185,9 +198,16 @@ export const EmployeeMasterData: React.FC = () => {
         setFetchedEmployees((prev) => prev.filter((e) => e.id !== emp.id));
         deleteEmployee(emp.id);
         showToast(`Data karyawan ${emp.fullName} berhasil dihapus dari sistem.`, 'info');
-      } catch (err) {
-        deleteEmployee(emp.id);
-        showToast(`Data karyawan telah dihapus.`, 'info');
+        
+        addAuditLog({
+          actor: currentUser?.name || 'HRD Admin',
+          action: 'DELETE',
+          target: `Master Karyawan: ${emp.nip}`,
+          details: `Menghapus/menonaktifkan data karyawan ${emp.fullName}`,
+          category: 'DATA_MASTER',
+        });
+      } catch (err: any) {
+        showToast(`Gagal menghapus karyawan: ${err.message}`, 'error');
       }
     }
   };
