@@ -32,13 +32,13 @@ export const GeofenceAndShiftConfig: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'GEOFENCE' | 'SHIFTS' | 'HOLIDAYS'>('GEOFENCE');
 
   // Geofence form state
-  const [officeName, setOfficeName] = useState(geofenceConfig.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)');
-  const [latitude, setLatitude] = useState(geofenceConfig.latitude?.toString() || '-6.2915');
-  const [longitude, setLongitude] = useState(geofenceConfig.longitude?.toString() || '106.7932');
-  const [radiusMeters, setRadiusMeters] = useState(geofenceConfig.radiusMeters?.toString() || '150');
-  const [workStartTime, setWorkStartTime] = useState(geofenceConfig.workStartTime || '08:30');
-  const [workEndTime, setWorkEndTime] = useState(geofenceConfig.workEndTime || '17:30');
-  const [lateToleranceMinutes, setLateToleranceMinutes] = useState(geofenceConfig.lateToleranceMinutes?.toString() || '15');
+  const [officeName, setOfficeName] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [radiusMeters, setRadiusMeters] = useState('');
+  const [workStartTime, setWorkStartTime] = useState('');
+  const [workEndTime, setWorkEndTime] = useState('');
+  const [lateToleranceMinutes, setLateToleranceMinutes] = useState('');
   const [wfhIncentivePerDay, setWfhIncentivePerDay] = useState(
     (geofenceConfig.wfhIncentivePerDay || 50000).toString()
   );
@@ -59,10 +59,13 @@ export const GeofenceAndShiftConfig: React.FC = () => {
 
   const handleSaveGeofence = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedLat = parseFloat(latitude);
-    const parsedLong = parseFloat(longitude);
-    const parsedRadius = parseInt(radiusMeters, 10);
-    const parsedTolerance = parseInt(lateToleranceMinutes, 10);
+    const finalOfficeName = officeName.trim() || geofenceConfig.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)';
+    const parsedLat = latitude ? parseFloat(latitude) : geofenceConfig.latitude || -6.2915;
+    const parsedLong = longitude ? parseFloat(longitude) : geofenceConfig.longitude || 106.7932;
+    const parsedRadius = radiusMeters ? parseInt(radiusMeters, 10) : geofenceConfig.radiusMeters || 150;
+    const finalStartTime = workStartTime || geofenceConfig.workStartTime || '08:30';
+    const finalEndTime = workEndTime || geofenceConfig.workEndTime || '17:30';
+    const parsedTolerance = lateToleranceMinutes ? parseInt(lateToleranceMinutes, 10) : geofenceConfig.lateToleranceMinutes || 15;
 
     if (isNaN(parsedLat) || isNaN(parsedLong) || isNaN(parsedRadius) || isNaN(parsedTolerance)) {
       showToast('Harap masukkan angka latitude/longitude/radius yang valid!', 'error');
@@ -70,12 +73,12 @@ export const GeofenceAndShiftConfig: React.FC = () => {
     }
 
     const updated = {
-      officeName,
+      officeName: finalOfficeName,
       latitude: parsedLat,
       longitude: parsedLong,
       radiusMeters: parsedRadius,
-      workStartTime,
-      workEndTime,
+      workStartTime: finalStartTime,
+      workEndTime: finalEndTime,
       lateToleranceMinutes: parsedTolerance,
       wfhIncentivePerDay: Number(wfhIncentivePerDay) || 50000,
       lateDeductionPerOccurrence: Number(lateDeductionPerOccurrence) || 25000,
