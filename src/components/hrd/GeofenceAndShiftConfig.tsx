@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { WorkShift, HolidayCalendar } from '../../types';
+import { WorkShift, HolidayCalendar, GeofenceConfig } from '../../types';
+import { GeofenceModal } from './GeofenceModal';
 import {
   MapPin,
   Clock,
@@ -15,6 +16,7 @@ import {
   AlertCircle,
   Sparkles,
   ShieldAlert,
+  Edit3,
 } from 'lucide-react';
 
 export const GeofenceAndShiftConfig: React.FC = () => {
@@ -31,11 +33,9 @@ export const GeofenceAndShiftConfig: React.FC = () => {
 
   const [activeSubTab, setActiveSubTab] = useState<'GEOFENCE' | 'SHIFTS' | 'HOLIDAYS'>('GEOFENCE');
 
-  // Geofence form state
-  const [officeName, setOfficeName] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [radiusMeters, setRadiusMeters] = useState('');
+  // Modal State for Geofence
+  const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
+  const [editingGeofence, setEditingGeofence] = useState<GeofenceConfig | null>(null);
   const [workStartTime, setWorkStartTime] = useState('');
   const [workEndTime, setWorkEndTime] = useState('');
   const [lateToleranceMinutes, setLateToleranceMinutes] = useState('');
@@ -211,205 +211,82 @@ export const GeofenceAndShiftConfig: React.FC = () => {
 
       {/* Subtab 1: GEOFENCE CONFIG & OFFICE LOCATIONS TABLE */}
       {activeSubTab === 'GEOFENCE' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2 border-b border-zinc-800 pb-4 mb-6">
-              <MapPin className="w-5 h-5 text-cyan-400" />
-              <span>Pengaturan Radius & Koordinat Kantor Utama</span>
-            </h2>
-
-            <form onSubmit={handleSaveGeofence} className="space-y-6 text-xs">
-              <div>
-                <label className="block text-zinc-300 font-semibold mb-1.5">Nama Lokasi Kantor / Gedung</label>
-                <input
-                  type="text"
-                  value={officeName}
-                  onChange={(e) => setOfficeName(e.target.value)}
-                  placeholder="Kantor Pusat HQ Jakarta (South Quarter)"
-                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl p-3 outline-none focus:border-cyan-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Latitude (GPS)</label>
-                  <input
-                    type="text"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="-6.2915"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Longitude (GPS)</label>
-                  <input
-                    type="text"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="106.7932"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Radius Maksimal (Meter)</label>
-                  <input
-                    type="number"
-                    value={radiusMeters}
-                    onChange={(e) => setRadiusMeters(e.target.value)}
-                    placeholder="150"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-cyan-400 font-mono font-bold rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-zinc-800">
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Jam Masuk Reguler</label>
-                  <input
-                    type="time"
-                    value={workStartTime}
-                    onChange={(e) => setWorkStartTime(e.target.value)}
-                    placeholder="08:30"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Jam Pulang Reguler</label>
-                  <input
-                    type="time"
-                    value={workEndTime}
-                    onChange={(e) => setWorkEndTime(e.target.value)}
-                    placeholder="17:30"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Toleransi Keterlambatan (Menit)</label>
-                  <input
-                    type="number"
-                    value={lateToleranceMinutes}
-                    onChange={(e) => setLateToleranceMinutes(e.target.value)}
-                    placeholder="15"
-                    className="w-full bg-zinc-900 border border-zinc-800 text-amber-400 font-mono font-bold rounded-xl p-3 outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-
-
-
-              <div className="pt-4 flex justify-end">
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-cyan-500/20"
-                >
-                  <Save className="w-4 h-4" />
-                  Simpan Konfigurasi Geofencing
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Map Preview Card */}
-          <div className="bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 shadow-xl space-y-4">
-            <h3 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-cyan-400" />
-              <span>Status Geofencing Visual</span>
-            </h3>
-
-            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-400">Pusat Kantor:</span>
-                <span className="font-mono text-cyan-400 font-bold">{geofenceConfig.officeName}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-400">Koordinat:</span>
-                <span className="font-mono text-zinc-300">{geofenceConfig.latitude}, {geofenceConfig.longitude}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-400">Radius Toleransi On-Site:</span>
-                <span className="font-mono text-emerald-400 font-bold">{geofenceConfig.radiusMeters} Meter</span>
-              </div>
-            </div>
-
-            <div className="bg-cyan-500/10 border border-cyan-500/20 p-4 rounded-2xl text-xs text-cyan-300 leading-relaxed flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
-              <span>
-                Ketika karyawan melakukan Clock-In, sistem akan otomatis menghitung rumus <strong>Haversine Distance</strong> terhadap koordinat kantor di atas.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabel Master Data Geofence Kantor (MySQL geofence_configs) */}
-        <div className="bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+        <div className="bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-5">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                <Building2 className="w-5 h-5" />
+              <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Building2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-zinc-100">Daftar Lokasi Kantor & Radius Geofencing (Tabel MySQL)</h3>
-                <p className="text-xs text-zinc-400">Master data lokasi gedung kantor resmi yang terdaftar di database <code className="text-cyan-400">geofence_configs</code></p>
+                <h2 className="text-base font-extrabold text-zinc-100 flex items-center gap-2">
+                  <span>Daftar Lokasi Kantor & Geofence Radius</span>
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Master data lokasi gedung kantor resmi yang terdaftar di database MySQL <code className="text-cyan-400 font-mono font-bold">geofence_configs</code>
+                </p>
               </div>
             </div>
-            <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs font-mono font-bold self-start sm:self-auto">
-              1 Lokasi Terdaftar
-            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingGeofence(null);
+                setIsGeofenceModalOpen(true);
+              }}
+              className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-extrabold text-xs rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Lokasi Kantor Baru</span>
+            </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-2xl border border-zinc-800">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-900/80 text-zinc-400 font-mono uppercase text-[11px] border-b border-zinc-800">
+              <thead className="bg-zinc-900/90 text-zinc-400 font-mono uppercase text-[11px] border-b border-zinc-800">
                 <tr>
-                  <th className="px-4 py-3">Nama Lokasi / Gedung</th>
-                  <th className="px-4 py-3">Koordinat GPS</th>
-                  <th className="px-4 py-3">Radius Maksimal</th>
-                  <th className="px-4 py-3">Jam Kerja Reguler</th>
-                  <th className="px-4 py-3">Toleransi</th>
-                  <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <th className="px-5 py-3.5">Nama Lokasi / Gedung</th>
+                  <th className="px-5 py-3.5">Koordinat GPS</th>
+                  <th className="px-5 py-3.5">Radius Maksimal</th>
+                  <th className="px-5 py-3.5">Jam Kerja Reguler</th>
+                  <th className="px-5 py-3.5">Toleransi</th>
+                  <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60 font-mono text-zinc-200">
                 <tr className="hover:bg-zinc-900/50 transition-colors">
-                  <td className="px-4 py-3.5 font-bold font-sans text-zinc-100 flex items-center gap-2">
+                  <td className="px-5 py-4 font-bold font-sans text-zinc-100 flex items-center gap-2.5">
                     <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
                     <span>{geofenceConfig.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)'}</span>
                   </td>
-                  <td className="px-4 py-3.5 text-zinc-300">
+                  <td className="px-5 py-4 text-zinc-300">
                     {geofenceConfig.latitude || -6.2915}, {geofenceConfig.longitude || 106.7932}
                   </td>
-                  <td className="px-4 py-3.5 text-emerald-400 font-bold">
+                  <td className="px-5 py-4 text-emerald-400 font-bold">
                     {geofenceConfig.radiusMeters || 150} Meter
                   </td>
-                  <td className="px-4 py-3.5 text-zinc-300">
+                  <td className="px-5 py-4 text-zinc-300">
                     {geofenceConfig.workStartTime || '08:30'} - {geofenceConfig.workEndTime || '17:30'} WIB
                   </td>
-                  <td className="px-4 py-3.5 text-amber-400 font-bold">
+                  <td className="px-5 py-4 text-amber-400 font-bold">
                     {geofenceConfig.lateToleranceMinutes || 15} Menit
                   </td>
-                  <td className="px-4 py-3.5 text-center">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <td className="px-5 py-4 text-center font-sans">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                       KANTOR UTAMA (AKTIF)
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 text-right font-sans">
+                  <td className="px-5 py-4 text-right font-sans">
                     <button
                       type="button"
                       onClick={() => {
-                        setOfficeName(geofenceConfig.officeName);
-                        setLatitude(geofenceConfig.latitude.toString());
-                        setLongitude(geofenceConfig.longitude.toString());
-                        setRadiusMeters(geofenceConfig.radiusMeters.toString());
-                        setWorkStartTime(geofenceConfig.workStartTime);
-                        setWorkEndTime(geofenceConfig.workEndTime);
-                        setLateToleranceMinutes(geofenceConfig.lateToleranceMinutes.toString());
+                        setEditingGeofence(geofenceConfig);
+                        setIsGeofenceModalOpen(true);
                       }}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                      className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-zinc-700/60 shadow-sm"
                     >
-                      Edit Form
+                      <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Edit Lokasi</span>
                     </button>
                   </td>
                 </tr>
@@ -417,8 +294,29 @@ export const GeofenceAndShiftConfig: React.FC = () => {
             </table>
           </div>
         </div>
-      </div>
       )}
+
+      {/* Geofence Modal for Adding / Editing office locations */}
+      <GeofenceModal
+        isOpen={isGeofenceModalOpen}
+        onClose={() => {
+          setIsGeofenceModalOpen(false);
+          setEditingGeofence(null);
+        }}
+        initialData={editingGeofence}
+        onSave={(updated) => {
+          updateGeofenceConfig(updated);
+          showToast(`Lokasi geofence ${updated.officeName} berhasil disimpan!`, 'success');
+          addAuditLog({
+            actorNip: 'EMP-2026-001',
+            actorName: 'HRD Admin',
+            actorRole: 'HRD_ADMIN',
+            action: 'UPDATE_GEOFENCE_CONFIG',
+            category: 'SYSTEM',
+            details: `Mengubah konfigurasi geofence lokasi ${updated.officeName} (Lat: ${updated.latitude}, Long: ${updated.longitude}, Radius: ${updated.radiusMeters}m).`,
+          });
+        }}
+      />
 
       {/* Subtab 2: SHIFT SCHEDULES */}
       {activeSubTab === 'SHIFTS' && (
