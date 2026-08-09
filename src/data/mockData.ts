@@ -47,13 +47,6 @@ export const INITIAL_GEOFENCE_CONFIG = {
   lateDeductionPerOccurrence: 0,
 };
 
-export const INITIAL_WORK_SHIFTS = [
-  { id: 'shf-1', code: 'SHIFT-REG', name: 'Shift Reguler (Standard Office)', startTime: '08:30', endTime: '17:30', breakStartTime: '12:00', breakEndTime: '13:00', isDefault: true },
-  { id: 'shf-2', code: 'SHIFT-PAGI', name: 'Shift Pagi (Early Bird)', startTime: '07:30', endTime: '16:30', breakStartTime: '11:30', breakEndTime: '12:30', isDefault: false },
-  { id: 'shf-3', code: 'SHIFT-FLEXI', name: 'Shift Flexi (WFH Core Hours)', startTime: '09:00', endTime: '18:00', breakStartTime: '12:00', breakEndTime: '13:00', isDefault: false },
-];
+export const INITIAL_WORK_SHIFTS: WorkShift[] = [];
 
-export const INITIAL_HOLIDAYS = [
-  { id: 'hol-1', date: '2026-08-17', title: 'HARI KEMERDEKAAN REPUBLIK INDONESIA SE-78', type: 'NATIONAL' as const, isCutQuota: false },
-  { id: 'hol-2', date: '2026-12-25', title: 'HARI RAYA NATAL', type: 'NATIONAL' as const, isCutQuota: false },
-];
+export const INITIAL_HOLIDAYS: HolidayCalendar[] = [];
