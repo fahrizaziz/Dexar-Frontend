@@ -288,42 +288,7 @@ export const GeofenceAndShiftConfig: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tarif Payroll & Rules */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-zinc-800">
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Tarif Insentif WFH (IDR / Hari)</label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-emerald-400">Rp</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step={5000}
-                      value={wfhIncentivePerDay}
-                      onChange={(e) => setWfhIncentivePerDay(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-zinc-900 border border-zinc-800 text-emerald-400 font-mono font-bold rounded-xl pl-10 pr-3 py-3 outline-none focus:border-cyan-500 text-xs"
-                    />
-                  </div>
-                  <p className="text-[10px] text-zinc-500 mt-1">Insentif per hari WFH yang berhasil dikerjakan.</p>
-                </div>
 
-                <div>
-                  <label className="block text-zinc-300 font-semibold mb-1.5">Denda Keterlambatan (IDR / Kejadian)</label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-3 text-xs font-mono font-bold text-rose-400">Rp</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step={5000}
-                      value={lateDeductionPerOccurrence}
-                      onChange={(e) => setLateDeductionPerOccurrence(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-zinc-900 border border-zinc-800 text-rose-400 font-mono font-bold rounded-xl pl-10 pr-3 py-3 outline-none focus:border-cyan-500 text-xs"
-                    />
-                  </div>
-                  <p className="text-[10px] text-zinc-500 mt-1">Potongan gaji per kejadian keterlambatan absensi.</p>
-                </div>
-              </div>
 
               <div className="pt-4 flex justify-end">
                 <button
