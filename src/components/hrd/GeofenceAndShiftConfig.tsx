@@ -206,9 +206,10 @@ export const GeofenceAndShiftConfig: React.FC = () => {
         </div>
       </div>
 
-      {/* Subtab 1: GEOFENCE CONFIG */}
+      {/* Subtab 1: GEOFENCE CONFIG & OFFICE LOCATIONS TABLE */}
       {activeSubTab === 'GEOFENCE' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-xl">
             <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2 border-b border-zinc-800 pb-4 mb-6">
               <MapPin className="w-5 h-5 text-cyan-400" />
@@ -337,6 +338,83 @@ export const GeofenceAndShiftConfig: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Tabel Master Data Geofence Kantor (MySQL geofence_configs) */}
+        <div className="bg-[#0c0c0e] border border-zinc-800 rounded-3xl p-6 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-zinc-100">Daftar Lokasi Kantor & Radius Geofencing (Tabel MySQL)</h3>
+                <p className="text-xs text-zinc-400">Master data lokasi gedung kantor resmi yang terdaftar di database <code className="text-cyan-400">geofence_configs</code></p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs font-mono font-bold self-start sm:self-auto">
+              1 Lokasi Terdaftar
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-900/80 text-zinc-400 font-mono uppercase text-[11px] border-b border-zinc-800">
+                <tr>
+                  <th className="px-4 py-3">Nama Lokasi / Gedung</th>
+                  <th className="px-4 py-3">Koordinat GPS</th>
+                  <th className="px-4 py-3">Radius Maksimal</th>
+                  <th className="px-4 py-3">Jam Kerja Reguler</th>
+                  <th className="px-4 py-3">Toleransi</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/60 font-mono text-zinc-200">
+                <tr className="hover:bg-zinc-900/50 transition-colors">
+                  <td className="px-4 py-3.5 font-bold font-sans text-zinc-100 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <span>{geofenceConfig.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)'}</span>
+                  </td>
+                  <td className="px-4 py-3.5 text-zinc-300">
+                    {geofenceConfig.latitude || -6.2915}, {geofenceConfig.longitude || 106.7932}
+                  </td>
+                  <td className="px-4 py-3.5 text-emerald-400 font-bold">
+                    {geofenceConfig.radiusMeters || 150} Meter
+                  </td>
+                  <td className="px-4 py-3.5 text-zinc-300">
+                    {geofenceConfig.workStartTime || '08:30'} - {geofenceConfig.workEndTime || '17:30'} WIB
+                  </td>
+                  <td className="px-4 py-3.5 text-amber-400 font-bold">
+                    {geofenceConfig.lateToleranceMinutes || 15} Menit
+                  </td>
+                  <td className="px-4 py-3.5 text-center">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      KANTOR UTAMA (AKTIF)
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 text-right font-sans">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfficeName(geofenceConfig.officeName);
+                        setLatitude(geofenceConfig.latitude.toString());
+                        setLongitude(geofenceConfig.longitude.toString());
+                        setRadiusMeters(geofenceConfig.radiusMeters.toString());
+                        setWorkStartTime(geofenceConfig.workStartTime);
+                        setWorkEndTime(geofenceConfig.workEndTime);
+                        setLateToleranceMinutes(geofenceConfig.lateToleranceMinutes.toString());
+                      }}
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                    >
+                      Edit Form
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       )}
 
       {/* Subtab 2: SHIFT SCHEDULES */}
