@@ -26,9 +26,9 @@ export const GeofenceModal: React.FC<GeofenceModalProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      setOfficeName(initialData.officeName || '');
-      setLatitude(initialData.latitude ? initialData.latitude.toString() : '');
-      setLongitude(initialData.longitude ? initialData.longitude.toString() : '');
+      setOfficeName(initialData.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)');
+      setLatitude(initialData.latitude ? initialData.latitude.toString() : '-6.2915');
+      setLongitude(initialData.longitude ? initialData.longitude.toString() : '106.7932');
       setRadiusMeters(initialData.radiusMeters ? initialData.radiusMeters.toString() : '150');
       setWorkStartTime(initialData.workStartTime || '08:30');
       setWorkEndTime(initialData.workEndTime || '17:30');
