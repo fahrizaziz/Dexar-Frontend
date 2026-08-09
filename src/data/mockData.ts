@@ -3,12 +3,10 @@ import { getTodayDateString } from '../utils/dateUtils';
 
 export const INITIAL_DEPARTMENTS: DepartmentMaster[] = [
   { id: 'dept-1', code: 'DEPT-001', name: 'Human Resources & General Affairs', headOfDepartment: 'Siti Rahmawati', description: 'Divisi Manajemen Sumber Daya Manusia & Operational HRD', status: 'AKTIF' },
-  { id: 'dept-2', code: 'DEPT-002', name: 'Engineering & Tech', headOfDepartment: '-', description: 'Divisi Rekayasa Perangkat Lunak & IT', status: 'AKTIF' },
 ];
 
 export const INITIAL_POSITIONS: PositionMaster[] = [
   { id: 'pos-1', code: 'POS-001', name: 'HR Manager & System Admin', departmentName: 'Human Resources & General Affairs', level: 'Manager', status: 'AKTIF' },
-  { id: 'pos-2', code: 'POS-002', name: 'Senior Frontend Engineer', departmentName: 'Engineering & Tech', level: 'Senior', status: 'AKTIF' },
 ];
 
 // Single HRD Admin User

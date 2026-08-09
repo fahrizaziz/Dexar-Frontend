@@ -11,15 +11,15 @@ import {
   INITIAL_HOLIDAYS,
 } from '../data/mockData';
 
-const EMPLOYEES_KEY = 'wfh_app_employees_v4';
-const ATTENDANCE_KEY = 'wfh_app_attendance_v4';
-const LEAVE_KEY = 'wfh_app_leave_v4';
-const DEPARTMENTS_KEY = 'wfh_app_departments_v4';
-const POSITIONS_KEY = 'wfh_app_positions_v4';
-const AUDIT_LOGS_KEY = 'wfh_app_audit_logs_v4';
-const GEOFENCE_KEY = 'wfh_app_geofence_v4';
-const WORK_SHIFTS_KEY = 'wfh_app_work_shifts_v4';
-const HOLIDAYS_KEY = 'wfh_app_holidays_v4';
+const EMPLOYEES_KEY = 'wfh_app_employees_v5';
+const ATTENDANCE_KEY = 'wfh_app_attendance_v5';
+const LEAVE_KEY = 'wfh_app_leave_v5';
+const DEPARTMENTS_KEY = 'wfh_app_departments_v5';
+const POSITIONS_KEY = 'wfh_app_positions_v5';
+const AUDIT_LOGS_KEY = 'wfh_app_audit_logs_v5';
+const GEOFENCE_KEY = 'wfh_app_geofence_v5';
+const WORK_SHIFTS_KEY = 'wfh_app_work_shifts_v5';
+const HOLIDAYS_KEY = 'wfh_app_holidays_v5';
 
 export const storageService = {
   // Departments Master
