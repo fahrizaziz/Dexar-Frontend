@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee, AttendanceRecord, LeaveRequest, DepartmentMaster, PositionMaster, AuditLog, GeofenceConfig, WorkShift, HolidayCalendar } from '../types';
 import { storageService } from '../services/storageService';
 import { auditService } from '../services/auditService';
+import { employeeService } from '../services/employeeService';
 
 export interface ToastMessage {
   id: string;
@@ -96,6 +97,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const created = storageService.addEmployee(emp);
     setEmployees(storageService.getEmployees());
     showToast(`Karyawan baru ${created.fullName} berhasil ditambahkan!`, 'success');
+
+    // Kirim request ke API backend NestJS agar tersimpan permanen ke MySQL
+    employeeService.createEmployee({
+      nip: created.nip,
+      fullName: created.fullName,
+      email: created.email,
+      phone: created.phone,
+      department: created.department,
+      position: created.position,
+      role: created.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
+      status: created.status === 'AKTIF' ? 'ACTIVE' : 'INACTIVE',
+      wfhAllowanceDaysPerWeek: created.wfhAllowanceDaysPerWeek,
+      salary: created.salary,
+      avatarUrl: created.avatarUrl,
+    }).catch((err) => {
+      console.warn('Backend API createEmployee error/offline:', err);
+    });
+
     return created;
   };
 
@@ -104,6 +123,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (updated) {
       setEmployees(storageService.getEmployees());
       showToast(`Data karyawan ${updated.fullName} berhasil diperbarui.`, 'info');
+
+      // Kirim request ke API backend NestJS
+      employeeService.updateEmployee(id, {
+        fullName: fields.fullName,
+        email: fields.email,
+        phone: fields.phone,
+        department: fields.department,
+        position: fields.position,
+        role: fields.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
+        wfhAllowanceDaysPerWeek: fields.wfhAllowanceDaysPerWeek,
+        salary: fields.salary,
+      }).catch((err) => {
+        console.warn('Backend API updateEmployee error/offline:', err);
+      });
     }
   };
 
@@ -111,6 +144,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storageService.deleteEmployee(id);
     setEmployees(storageService.getEmployees());
     showToast(`Data karyawan telah dihapus dari sistem.`, 'info');
+
+    // Kirim request ke API backend NestJS
+    employeeService.deleteEmployee(id).catch((err) => {
+      console.warn('Backend API deleteEmployee error/offline:', err);
+    });
   };
 
   // Department Handlers
