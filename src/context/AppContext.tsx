@@ -67,11 +67,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       // Ambil data murni 100% dari API NestJS & Database MySQL
-      const [apiEmps, apiDepts, apiPositions, apiGeo] = await Promise.all([
+      const [apiEmps, apiDepts, apiPositions, apiGeo, apiLogs] = await Promise.all([
         employeeService.getAllEmployees().catch(() => []),
         employeeService.getAllDepartments().catch(() => []),
         employeeService.getAllPositions().catch(() => []),
         geofenceService.getGeofenceConfig().catch(() => null),
+        auditService.getAuditLogs().catch(() => []),
       ]);
 
       setEmployees(apiEmps.length > 0 ? apiEmps : storageService.getEmployees());
@@ -79,6 +80,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPositions(apiPositions.length > 0 ? apiPositions : storageService.getPositions());
       if (apiGeo) {
         setGeofenceConfig(apiGeo);
+      }
+      if (apiLogs.length > 0) {
+        setAuditLogs(apiLogs as any);
       }
     } catch (err) {
       console.warn('API Load error, falling back to clean state:', err);
@@ -298,9 +302,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addAuditLog = (log: Omit<AuditLog, 'id' | 'timestamp'>) => {
-    storageService.addAuditLog(log);
-    setAuditLogs(storageService.getAuditLogs());
-    auditService.logAction(log).catch(() => {});
+    auditService.logAction(log).then(() => {
+      auditService.getAuditLogs().then((logs) => {
+        if (logs.length > 0) {
+          setAuditLogs(logs as any);
+        }
+      });
+    }).catch((err) => {
+      console.warn('Backend API addAuditLog error:', err);
+    });
   };
 
   const updateGeofenceConfig = (config: GeofenceConfig) => {
