@@ -32,13 +32,13 @@ export const GeofenceAndShiftConfig: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'GEOFENCE' | 'SHIFTS' | 'HOLIDAYS'>('GEOFENCE');
 
   // Geofence form state
-  const [officeName, setOfficeName] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [radiusMeters, setRadiusMeters] = useState('');
-  const [workStartTime, setWorkStartTime] = useState('');
-  const [workEndTime, setWorkEndTime] = useState('');
-  const [lateToleranceMinutes, setLateToleranceMinutes] = useState('');
+  const [officeName, setOfficeName] = useState(geofenceConfig.officeName || 'Kantor Pusat HQ Jakarta (South Quarter)');
+  const [latitude, setLatitude] = useState(geofenceConfig.latitude?.toString() || '-6.2915');
+  const [longitude, setLongitude] = useState(geofenceConfig.longitude?.toString() || '106.7932');
+  const [radiusMeters, setRadiusMeters] = useState(geofenceConfig.radiusMeters?.toString() || '150');
+  const [workStartTime, setWorkStartTime] = useState(geofenceConfig.workStartTime || '08:30');
+  const [workEndTime, setWorkEndTime] = useState(geofenceConfig.workEndTime || '17:30');
+  const [lateToleranceMinutes, setLateToleranceMinutes] = useState(geofenceConfig.lateToleranceMinutes?.toString() || '15');
   const [wfhIncentivePerDay, setWfhIncentivePerDay] = useState(
     (geofenceConfig.wfhIncentivePerDay || 50000).toString()
   );
