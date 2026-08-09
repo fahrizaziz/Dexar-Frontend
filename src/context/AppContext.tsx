@@ -3,6 +3,7 @@ import { Employee, AttendanceRecord, LeaveRequest, DepartmentMaster, PositionMas
 import { storageService } from '../services/storageService';
 import { auditService } from '../services/auditService';
 import { employeeService } from '../services/employeeService';
+import { geofenceService } from '../services/geofenceService';
 
 export interface ToastMessage {
   id: string;
@@ -66,15 +67,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     try {
       // Ambil data murni 100% dari API NestJS & Database MySQL
-      const [apiEmps, apiDepts, apiPositions] = await Promise.all([
+      const [apiEmps, apiDepts, apiPositions, apiGeo] = await Promise.all([
         employeeService.getAllEmployees().catch(() => []),
         employeeService.getAllDepartments().catch(() => []),
         employeeService.getAllPositions().catch(() => []),
+        geofenceService.getGeofenceConfig().catch(() => null),
       ]);
 
       setEmployees(apiEmps.length > 0 ? apiEmps : storageService.getEmployees());
       setDepartments(apiDepts.length > 0 ? apiDepts : storageService.getDepartments());
       setPositions(apiPositions.length > 0 ? apiPositions : storageService.getPositions());
+      if (apiGeo) {
+        setGeofenceConfig(apiGeo);
+      }
     } catch (err) {
       console.warn('API Load error, falling back to clean state:', err);
     } finally {
@@ -302,6 +307,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storageService.saveGeofenceConfig(config);
     setGeofenceConfig(config);
     showToast('Konfigurasi Geofencing & Jam Kerja Kantor berhasil disimpan!', 'success');
+
+    // Kirim request murni ke API NestJS & Database MySQL geofence_configs table
+    geofenceService.updateGeofenceConfig(config).then((updated) => {
+      if (updated) {
+        setGeofenceConfig(updated);
+      }
+    }).catch((err) => {
+      console.warn('Backend API updateGeofenceConfig error:', err);
+    });
   };
 
   const saveWorkShiftsList = (shifts: WorkShift[]) => {
