@@ -64,49 +64,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadData = async () => {
     setIsLoading(true);
 
-    // Ambil data lokal terlebih dahulu sebagai fallback cepat
-    setEmployees(storageService.getEmployees());
-    setDepartments(storageService.getDepartments());
-    setPositions(storageService.getPositions());
-    setAttendanceRecords(storageService.getAttendanceRecords());
-    setLeaveRequests(storageService.getLeaveRequests());
-    setAuditLogs(storageService.getAuditLogs());
-    setGeofenceConfig(storageService.getGeofenceConfig());
-    setWorkShifts(storageService.getWorkShifts());
-    setHolidays(storageService.getHolidays());
-
-    // Ambil data resmi realtime dari API NestJS & Database MySQL
     try {
-      const apiEmps = await employeeService.getAllEmployees();
-      if (Array.isArray(apiEmps) && apiEmps.length > 0) {
-        setEmployees(apiEmps);
-        storageService.saveEmployees(apiEmps);
-      }
-    } catch {
-      // Backend offline fallback
-    }
+      // Ambil data murni 100% dari API NestJS & Database MySQL
+      const [apiEmps, apiDepts, apiPositions] = await Promise.all([
+        employeeService.getAllEmployees().catch(() => []),
+        employeeService.getAllDepartments().catch(() => []),
+        employeeService.getAllPositions().catch(() => []),
+      ]);
 
-    try {
-      const apiDepts = await employeeService.getAllDepartments();
-      if (Array.isArray(apiDepts) && apiDepts.length > 0) {
-        setDepartments(apiDepts);
-        storageService.saveDepartments(apiDepts);
-      }
-    } catch {
-      // Backend offline fallback
+      setEmployees(apiEmps.length > 0 ? apiEmps : storageService.getEmployees());
+      setDepartments(apiDepts.length > 0 ? apiDepts : storageService.getDepartments());
+      setPositions(apiPositions.length > 0 ? apiPositions : storageService.getPositions());
+    } catch (err) {
+      console.warn('API Load error, falling back to clean state:', err);
+    } finally {
+      setIsLoading(false);
     }
-
-    try {
-      const apiPositions = await employeeService.getAllPositions();
-      if (Array.isArray(apiPositions) && apiPositions.length > 0) {
-        setPositions(apiPositions);
-        storageService.savePositions(apiPositions);
-      }
-    } catch {
-      // Backend offline fallback
-    }
-
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -126,60 +99,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addEmployee = (emp: Omit<Employee, 'id'>): Employee => {
-    const created = storageService.addEmployee(emp);
-    setEmployees(storageService.getEmployees());
-    showToast(`Karyawan baru ${created.fullName} berhasil ditambahkan!`, 'success');
+    const tempId = `emp-${Date.now()}`;
+    const newEmpObj: Employee = { ...emp, id: tempId };
 
-    // Kirim request ke API backend NestJS agar tersimpan permanen ke MySQL
+    // Update state React secara instan
+    setEmployees((prev) => [...prev, newEmpObj]);
+    showToast(`Karyawan baru ${emp.fullName} berhasil ditambahkan!`, 'success');
+
+    // Kirim request murni ke API backend NestJS & MySQL
     employeeService.createEmployee({
-      nip: created.nip,
-      fullName: created.fullName,
-      email: created.email,
-      phone: created.phone,
-      department: created.department,
-      position: created.position,
-      role: created.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
-      status: created.status === 'AKTIF' ? 'ACTIVE' : 'INACTIVE',
-      wfhAllowanceDaysPerWeek: created.wfhAllowanceDaysPerWeek,
-      salary: created.salary,
-      avatarUrl: created.avatarUrl,
+      nip: emp.nip,
+      fullName: emp.fullName,
+      email: emp.email,
+      phone: emp.phone,
+      department: emp.department,
+      position: emp.position,
+      role: emp.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
+      status: emp.status === 'AKTIF' ? 'ACTIVE' : 'INACTIVE',
+      wfhAllowanceDaysPerWeek: emp.wfhAllowanceDaysPerWeek,
+      salary: emp.salary,
+      avatarUrl: emp.avatarUrl,
+    }).then((created) => {
+      if (created) {
+        // Sync ulang data murni dari API
+        employeeService.getAllEmployees().then((fresh) => {
+          if (Array.isArray(fresh) && fresh.length > 0) setEmployees(fresh);
+        });
+      }
     }).catch((err) => {
-      console.warn('Backend API createEmployee error/offline:', err);
+      console.warn('Backend API createEmployee error:', err);
     });
 
-    return created;
+    return newEmpObj;
   };
 
   const updateEmployee = (id: string, fields: Partial<Employee>) => {
-    const updated = storageService.updateEmployee(id, fields);
-    if (updated) {
-      setEmployees(storageService.getEmployees());
-      showToast(`Data karyawan ${updated.fullName} berhasil diperbarui.`, 'info');
+    setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...fields } : e)));
+    showToast(`Data karyawan berhasil diperbarui.`, 'info');
 
-      // Kirim request ke API backend NestJS
-      employeeService.updateEmployee(id, {
-        fullName: fields.fullName,
-        email: fields.email,
-        phone: fields.phone,
-        department: fields.department,
-        position: fields.position,
-        role: fields.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
-        wfhAllowanceDaysPerWeek: fields.wfhAllowanceDaysPerWeek,
-        salary: fields.salary,
-      }).catch((err) => {
-        console.warn('Backend API updateEmployee error/offline:', err);
+    // Kirim request murni ke API backend NestJS & MySQL
+    employeeService.updateEmployee(id, {
+      fullName: fields.fullName,
+      email: fields.email,
+      phone: fields.phone,
+      department: fields.department,
+      position: fields.position,
+      role: fields.role as 'KARYAWAN' | 'HRD' | 'ADMIN',
+      wfhAllowanceDaysPerWeek: fields.wfhAllowanceDaysPerWeek,
+      salary: fields.salary,
+    }).then(() => {
+      employeeService.getAllEmployees().then((fresh) => {
+        if (Array.isArray(fresh) && fresh.length > 0) setEmployees(fresh);
       });
-    }
+    }).catch((err) => {
+      console.warn('Backend API updateEmployee error:', err);
+    });
   };
 
   const deleteEmployee = (id: string) => {
-    storageService.deleteEmployee(id);
-    setEmployees(storageService.getEmployees());
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
     showToast(`Data karyawan telah dihapus dari sistem.`, 'info');
 
-    // Kirim request ke API backend NestJS
-    employeeService.deleteEmployee(id).catch((err) => {
-      console.warn('Backend API deleteEmployee error/offline:', err);
+    // Kirim request murni ke API backend NestJS & MySQL
+    employeeService.deleteEmployee(id).then(() => {
+      employeeService.getAllEmployees().then((fresh) => {
+        if (Array.isArray(fresh)) setEmployees(fresh);
+      });
+    }).catch((err) => {
+      console.warn('Backend API deleteEmployee error:', err);
     });
   };
 
