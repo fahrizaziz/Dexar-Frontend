@@ -156,6 +156,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const created = storageService.addDepartment(dept);
     setDepartments(storageService.getDepartments());
     showToast(`Departemen Baru '${created.name}' (${created.code}) berhasil ditambahkan!`, 'success');
+
+    // API Call ke NestJS
+    employeeService.createDepartment(dept).catch((err) => {
+      console.warn('Backend API createDepartment error/offline:', err);
+    });
+
     return created;
   };
 
@@ -164,6 +170,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (updated) {
       setDepartments(storageService.getDepartments());
       showToast(`Master Departemen '${updated.name}' diperbarui.`, 'info');
+
+      // API Call ke NestJS
+      employeeService.updateDepartment(id, fields).catch((err) => {
+        console.warn('Backend API updateDepartment error/offline:', err);
+      });
     }
   };
 
@@ -171,6 +182,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storageService.deleteDepartment(id);
     setDepartments(storageService.getDepartments());
     showToast(`Master Departemen berhasil dihapus.`, 'info');
+
+    // API Call ke NestJS
+    employeeService.deleteDepartment(id).catch((err) => {
+      console.warn('Backend API deleteDepartment error/offline:', err);
+    });
   };
 
   // Position Handlers
@@ -178,6 +194,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const created = storageService.addPosition(pos);
     setPositions(storageService.getPositions());
     showToast(`Jabatan Baru '${created.name}' (${created.code}) berhasil ditambahkan!`, 'success');
+
+    // API Call ke NestJS
+    employeeService.createPosition(pos).catch((err) => {
+      console.warn('Backend API createPosition error/offline:', err);
+    });
+
     return created;
   };
 
@@ -186,6 +208,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (updated) {
       setPositions(storageService.getPositions());
       showToast(`Master Jabatan '${updated.name}' diperbarui.`, 'info');
+
+      // API Call ke NestJS
+      employeeService.updatePosition(id, fields).catch((err) => {
+        console.warn('Backend API updatePosition error/offline:', err);
+      });
     }
   };
 
@@ -193,6 +220,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storageService.deletePosition(id);
     setPositions(storageService.getPositions());
     showToast(`Master Jabatan berhasil dihapus.`, 'info');
+
+    // API Call ke NestJS
+    employeeService.deletePosition(id).catch((err) => {
+      console.warn('Backend API deletePosition error/offline:', err);
+    });
   };
 
   const submitAttendance = (record: Omit<AttendanceRecord, 'id' | 'createdAt'>): AttendanceRecord => {
